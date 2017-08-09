@@ -1,11 +1,18 @@
-version: '3'
-services:
-  postgres:
-    image: postgres:9.6
-    environment:
-      - POSTGRES_DB=work-journal
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=shievoh5Nohg2Ohd
+db:
+  image: postgres:9.6
+  ports:
+    - 5432:5432
+  environment: &db_environment
+    POSTGRES_DB: work-journal
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: shievoh5Nohg2Ohd
 
-  postgrest_api:
-    build: .
+api:
+  build: .
+  ports:
+    - 3000:3000
+  links:
+    - db:db
+  environment:
+    <<: *db_environment
+    POSTGRES_HOST: db
