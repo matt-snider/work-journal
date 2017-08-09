@@ -1,0 +1,11 @@
+version: '3'
+services:
+  postgres:
+    image: postgres:9.6
+    environment:
+      - POSTGRES_DB=work-journal
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=shievoh5Nohg2Ohd
+
+  postgrest_api:
+    build: .
