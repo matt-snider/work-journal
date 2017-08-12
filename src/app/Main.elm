@@ -18,27 +18,31 @@ model = []
 
 -- Update
 type Msg
-    = Add Task
-    | Delete Task
+    = Add
+    | Delete Int
+
+newTask : Task
+newTask = Task Nothing "" False
 
 update : Msg -> Model -> Model
 update msg model =
   case msg of
-    Add    t -> List.append [t] model
-    Delete t -> List.filter (\x -> x /= t) model
+    -- Add -> List.append [newTask] model
+    Add -> model ++ [newTask]
+    Delete index -> (List.take (index - 1) model) ++ (List.drop index model)
 
 
 -- View
 view : Model -> Html Msg
 view model =
     div []
-    [ ul [] (List.map listItem model)
-    , button [ onClick (Add newTask) ] [ text "Add" ]
+    [ ul [] (List.map listItem (List.indexedMap (,) model))
+    , button [ onClick Add ] [ text "Add" ]
     ]
 
-newTask : Task
-newTask = Task Nothing "new" False
-
-listItem : Task -> Html msg
-listItem t =
-    li [] [ text t.description ]
+listItem : (Int, Task) -> Html Msg
+listItem (index, t) =
+    li []
+    [ text t.description
+    , button [ onClick (Delete index) ] [ text "X" ]
+    ]
