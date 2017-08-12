@@ -1,12 +1,17 @@
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import List
+import Http as Http
+import Json.Decode as Decode
 import Array
 
-
 main =
-    Html.beginnerProgram { model = model, view = view, update = update }
+    Html.program
+        { view = view
+        , update = update
+        , init = (model, getTasks)
+        , subscriptions = (\x -> Sub.none)
+        }
 
 
 -- Model
@@ -19,7 +24,6 @@ type alias Task =
 
 type alias Model = Array.Array Task
 
-
 model : Model
 model = Array.empty
 
@@ -27,6 +31,7 @@ model = Array.empty
 -- Update
 type Msg
     = Add
+    | Load (Result Http.Error (Array.Array Task))
     | Change Int String
     | Delete Int
 
@@ -60,13 +65,15 @@ updateItem index newDescription model =
         Array.set index updated model
 
 
-update : Msg -> Model -> Model
+update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     -- Add -> List.append [newTask] model
-    Add -> addItem model
-    Delete index -> deleteItem index model
-    Change index description -> updateItem index description model
+    Add -> (addItem model, Cmd.none)
+    Delete index -> (deleteItem index model, Cmd.none)
+    Change index description -> (updateItem index description model, Cmd.none)
+    Load (Ok tasks) -> (tasks, Cmd.none)
+    Load (Err _) -> (model, Cmd.none)
 
 
 -- View
@@ -80,6 +87,23 @@ view model =
 listItem : (Int, Task) -> Html Msg
 listItem (index, t) =
     li []
-    [ input [placeholder t.description, onInput (Change index)] []
+    [ input [placeholder "Enter a task", onInput (Change index), value t.description ] []
     , button [ onClick (Delete index) ] [ text "X" ]
     ]
+
+
+-- HTTP
+getTasks : Cmd Msg
+getTasks = Http.send Load
+    <| Http.get "http://localhost:3000/tasks" tasksDecoder
+
+
+tasksDecoder : Decode.Decoder (Array.Array Task)
+tasksDecoder = Decode.array taskDecoder
+
+
+taskDecoder : Decode.Decoder Task
+taskDecoder = Decode.map3 Task
+    (Decode.at ["id"] (Decode.nullable Decode.int))
+    (Decode.at ["description"] Decode.string)
+    (Decode.at ["is_complete"] Decode.bool)
