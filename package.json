@@ -1,0 +1,30 @@
+{
+  "name": "work-journal",
+  "version": "0.0.1",
+  "description": "A tool built with PostgREST and Elm for tracking daily todo-lists and notes for work.",
+  "main": "src/app/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "elm": "elm"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/matt-snider/work-journal.git"
+  },
+  "keywords": [
+    "Elm",
+    "PostgREST",
+    "productivity",
+    "todo",
+    "journal"
+  ],
+  "author": "matt.snider@alum.utoronto.ca",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/matt-snider/work-journal/issues"
+  },
+  "homepage": "https://github.com/matt-snider/work-journal#readme",
+  "dependencies": {
+    "elm": "^0.18.0"
+  }
+}
