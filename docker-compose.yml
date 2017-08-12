@@ -6,6 +6,8 @@ db:
     POSTGRES_DB: work-journal
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: shievoh5Nohg2Ohd
+  volumes:
+    - "./db/:/docker-entrypoint-initdb.d"
 
 api:
   build: .
