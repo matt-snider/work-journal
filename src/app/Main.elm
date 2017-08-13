@@ -42,6 +42,7 @@ type Msg
     | EditDescription Int String
     | EditStatus  Int Bool
     | Delete Int
+    | StartEdit Int
     | OnAdd (Result Http.Error (Maybe ApiError))
     | OnDelete (Result Http.Error (Maybe ApiError))
     | Load (Result Http.Error (Array.Array Task))
@@ -63,26 +64,33 @@ addItem : Model -> Model
 addItem model = Array.push newTask model
 
 
-updateItem : Int -> Model -> (Task -> Task) -> (Model, Cmd Msg)
+updateItem : Int -> Model -> (Task -> Task) -> (Model, Task)
 updateItem index model updater =
-    case (Array.get index model) of
-        Just task ->
-            let updated = updater task
-            in (Array.set index updated model, saveTask updated)
-        Nothing -> (model, Cmd.none)
+    let updatedTask = Maybe.map updater (Array.get index model)
+    in case updatedTask of
+        Just t -> (Array.set index t model, t)
+        Nothing -> (model, newTask)
+
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    -- Add -> List.append [newTask] model
     Add -> (addItem model, Cmd.none)
+
     Delete index -> deleteItem index model
+
     EditDescription index description ->
-        updateItem index model (\t -> { t | description = description })
+        let (newModel, task) = updateItem index model (\t -> { t | description = description, isEditing = False})
+        in (newModel, saveTask task)
 
     EditStatus index isComplete ->
-        updateItem index model (\t -> { t | isComplete = isComplete })
+        let (newModel, task) = updateItem index model (\t -> { t | isComplete = isComplete })
+        in (newModel, saveTask task)
+
+    StartEdit index ->
+        let (newModel, task) = updateItem index model (\t -> { t | isEditing = True })
+        in (newModel, Cmd.none)
 
     Load (Ok tasks) -> (tasks, Cmd.none)
     Load (Err _) -> (model, Cmd.none)
@@ -101,13 +109,27 @@ view model =
     , button [ onClick Add ] [ text "Add" ]
     ]
 
+
 listItem : (Int, Task) -> Html Msg
 listItem (index, t) =
     li []
     [ input [type_ "checkbox", onCheck (EditStatus index), checked t.isComplete ] []
-    , input [placeholder "Enter a task", onInput (EditDescription index), value t.description ] []
+    , maybeInput t index
     , button [ onClick (Delete index) ] [ text "X" ]
     ]
+
+
+onInputBlur : (String -> msg) -> Attribute msg
+onInputBlur tagger =
+    on "blur" (Decode.map tagger targetValue)
+
+
+maybeInput : Task -> Int -> Html Msg
+maybeInput task index =
+    if task.isEditing == True then
+        input [ placeholder "Enter a task", onInputBlur (EditDescription index), value task.description ] []
+    else
+        span [ onClick (StartEdit index) ] [ text task.description ]
 
 
 -- HTTP
@@ -169,7 +191,7 @@ taskDecoder : Decode.Decoder Task
 taskDecoder = Decode.map3 makeTask
     (Decode.at ["id"] (Decode.nullable Decode.int))
     (Decode.at ["description"] Decode.string)
-    (Decode.at ["isComplete"] Decode.bool)
+    (Decode.at ["is_complete"] Decode.bool)
 
 
 taskEncoder : Task -> Encode.Value
