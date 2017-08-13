@@ -32,10 +32,11 @@ model = Array.empty
 -- Update
 type Msg
     = Add
+    | EditDescription Int String
+    | EditIsComplete  Int Bool
+    | Delete Int
     | OnAdd (Result Http.Error (Maybe ApiError))
     | Load (Result Http.Error (Array.Array Task))
-    | Change Int String
-    | Delete Int
 
 
 deleteItem : Int -> Model -> Model
@@ -66,17 +67,24 @@ update msg model =
     -- Add -> List.append [newTask] model
     Add -> (addItem model, Cmd.none)
     Delete index -> (deleteItem index model, Cmd.none)
-    Change index description ->
+    EditDescription index description ->
         let
             oldTask = Array.get index model
             updated = case oldTask of
                 Just t -> { t | description = description }
                 Nothing -> Task Nothing "" False
         in (updateItem index updated model, saveTask updated)
+    EditIsComplete index isComplete ->
+        let
+            oldTask = Array.get index model
+            updated = case oldTask of
+                Just t -> { t | is_complete = isComplete }
+                Nothing -> Task Nothing "" False
+        in (updateItem index updated model, saveTask updated)
     Load (Ok tasks) -> (tasks, Cmd.none)
     Load (Err _) -> (model, Cmd.none)
     OnAdd (Ok _) -> (model, Cmd.none)
-    OnAdd (Err err) -> (model, Debug.log ("Error:" ++ toString (err)) Cmd.none)
+    OnAdd (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
 
 -- View
@@ -90,7 +98,8 @@ view model =
 listItem : (Int, Task) -> Html Msg
 listItem (index, t) =
     li []
-    [ input [placeholder "Enter a task", onInput (Change index), value t.description ] []
+    [ input [type_ "checkbox", onCheck (EditIsComplete index), checked ( t.is_complete)] []
+    , input [placeholder "Enter a task", onInput (EditDescription index), value t.description ] []
     , button [ onClick (Delete index) ] [ text "X" ]
     ]
 
@@ -126,7 +135,6 @@ saveTask task =
             , timeout = Nothing
             , withCredentials = False
             }
-        -- Http.post url body apiErrorDecoder
     in
         Http.send OnAdd request
 
