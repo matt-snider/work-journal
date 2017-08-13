@@ -20,8 +20,15 @@ main =
 type alias Task =
     { id          : Maybe Int
     , description : String
-    , is_complete : Bool
+    , isComplete : Bool
+    , isEditing  : Bool
     }
+
+newTask : Task
+newTask = Task Nothing "" False True
+
+makeTask : Maybe Int -> String -> Bool -> Task
+makeTask a b c = Task a b c False
 
 type alias Model = Array.Array Task
 
@@ -53,21 +60,16 @@ deleteItem index model =
 
 
 addItem : Model -> Model
-addItem model =
-    let
-        newTask = Task Nothing "" False
-    in
-        Array.push newTask model
+addItem model = Array.push newTask model
 
 
 updateItem : Int -> Model -> (Task -> Task) -> (Model, Cmd Msg)
 updateItem index model updater =
-        let
-            oldTask = Array.get index model
-            updated = case oldTask of
-                Just t -> updater t
-                Nothing -> Task Nothing "" False
-        in (Array.set index updated model, saveTask updated)
+    case (Array.get index model) of
+        Just task ->
+            let updated = updater task
+            in (Array.set index updated model, saveTask updated)
+        Nothing -> (model, Cmd.none)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -80,7 +82,7 @@ update msg model =
         updateItem index model (\t -> { t | description = description })
 
     EditIsComplete index isComplete ->
-        updateItem index model (\t -> { t | is_complete = isComplete })
+        updateItem index model (\t -> { t | isComplete = isComplete })
 
     Load (Ok tasks) -> (tasks, Cmd.none)
     Load (Err _) -> (model, Cmd.none)
@@ -102,7 +104,7 @@ view model =
 listItem : (Int, Task) -> Html Msg
 listItem (index, t) =
     li []
-    [ input [type_ "checkbox", onCheck (EditIsComplete index), checked ( t.is_complete)] []
+    [ input [type_ "checkbox", onCheck (EditIsComplete index), checked t.isComplete ] []
     , input [placeholder "Enter a task", onInput (EditDescription index), value t.description ] []
     , button [ onClick (Delete index) ] [ text "X" ]
     ]
@@ -164,10 +166,10 @@ tasksDecoder = Decode.array taskDecoder
 
 
 taskDecoder : Decode.Decoder Task
-taskDecoder = Decode.map3 Task
+taskDecoder = Decode.map3 makeTask
     (Decode.at ["id"] (Decode.nullable Decode.int))
     (Decode.at ["description"] Decode.string)
-    (Decode.at ["is_complete"] Decode.bool)
+    (Decode.at ["isComplete"] Decode.bool)
 
 
 taskEncoder : Task -> Encode.Value
@@ -180,7 +182,7 @@ taskEncoder task =
         Encode.object
         [ ("id", idEncoder)
         , ("description", (Encode.string task.description))
-        , ("is_complete", (Encode.bool task.is_complete))
+        , ("is_complete", (Encode.bool task.isComplete))
         ]
 
 -- Mismatched decoder
