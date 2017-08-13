@@ -56,9 +56,14 @@ addItem model =
         Array.push newTask model
 
 
--- TODO: handle update failure in Nothing case
-updateItem : Int -> Task -> Model -> Model
-updateItem index newTask model = Array.set index newTask model
+updateItem : Int -> Model -> (Task -> Task) -> (Model, Cmd Msg)
+updateItem index model updater =
+        let
+            oldTask = Array.get index model
+            updated = case oldTask of
+                Just t -> updater t
+                Nothing -> Task Nothing "" False
+        in (Array.set index updated model, saveTask updated)
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
@@ -68,19 +73,11 @@ update msg model =
     Add -> (addItem model, Cmd.none)
     Delete index -> (deleteItem index model, Cmd.none)
     EditDescription index description ->
-        let
-            oldTask = Array.get index model
-            updated = case oldTask of
-                Just t -> { t | description = description }
-                Nothing -> Task Nothing "" False
-        in (updateItem index updated model, saveTask updated)
+        updateItem index model (\t -> { t | description = description })
+
     EditIsComplete index isComplete ->
-        let
-            oldTask = Array.get index model
-            updated = case oldTask of
-                Just t -> { t | is_complete = isComplete }
-                Nothing -> Task Nothing "" False
-        in (updateItem index updated model, saveTask updated)
+        updateItem index model (\t -> { t | is_complete = isComplete })
+
     Load (Ok tasks) -> (tasks, Cmd.none)
     Load (Err _) -> (model, Cmd.none)
     OnAdd (Ok _) -> (model, Cmd.none)
