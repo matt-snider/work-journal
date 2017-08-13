@@ -40,7 +40,7 @@ model = Array.empty
 type Msg
     = Add
     | EditDescription Int String
-    | EditIsComplete  Int Bool
+    | EditStatus  Int Bool
     | Delete Int
     | OnAdd (Result Http.Error (Maybe ApiError))
     | OnDelete (Result Http.Error (Maybe ApiError))
@@ -81,7 +81,7 @@ update msg model =
     EditDescription index description ->
         updateItem index model (\t -> { t | description = description })
 
-    EditIsComplete index isComplete ->
+    EditStatus index isComplete ->
         updateItem index model (\t -> { t | isComplete = isComplete })
 
     Load (Ok tasks) -> (tasks, Cmd.none)
@@ -104,7 +104,7 @@ view model =
 listItem : (Int, Task) -> Html Msg
 listItem (index, t) =
     li []
-    [ input [type_ "checkbox", onCheck (EditIsComplete index), checked t.isComplete ] []
+    [ input [type_ "checkbox", onCheck (EditStatus index), checked t.isComplete ] []
     , input [placeholder "Enter a task", onInput (EditDescription index), value t.description ] []
     , button [ onClick (Delete index) ] [ text "X" ]
     ]
