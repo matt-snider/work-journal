@@ -43,8 +43,9 @@ type Msg
     | EditStatus  Int Bool
     | Delete Int
     | StartEdit Int
-    | OnAdd (Result Http.Error (Maybe ApiError))
-    | OnDelete (Result Http.Error (Maybe ApiError))
+    | OnAdd (Result Http.Error Task)
+    | OnSave (Result Http.Error Task)
+    | OnDelete (Result Http.Error ())
     | Load (Result Http.Error (Array.Array Task))
 
 
@@ -60,8 +61,8 @@ deleteItem index model =
     in (Array.append start end, command)
 
 
-addItem : Model -> Model
-addItem model = Array.push newTask model
+addItem : Model -> (Model, Cmd Msg)
+addItem model = (model, saveTask newTask)
 
 
 updateItem : Int -> Model -> (Task -> Task) -> (Model, Task)
@@ -76,7 +77,7 @@ updateItem index model updater =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Add -> (addItem model, Cmd.none)
+    Add -> addItem model
 
     Delete index -> deleteItem index model
 
@@ -94,8 +95,10 @@ update msg model =
 
     Load (Ok tasks) -> (tasks, Cmd.none)
     Load (Err _) -> (model, Cmd.none)
-    OnAdd (Ok _) -> (model, Cmd.none)
+    OnAdd (Ok t) -> (Array.push {t | isEditing = True} model, Cmd.none)
     OnAdd (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+    OnSave (Ok _) -> (model, Cmd.none)
+    OnSave (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
     OnDelete (Ok _) -> (model, Cmd.none)
     OnDelete (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
@@ -143,27 +146,33 @@ getTasks = Http.send Load
 
 
 -- Save a task (either new or existing with id)
--- Update this to use PATCH or we get 409 Conflict
+-- The headers Prefer & Accept ensure that the service
+-- gives us back the inserted object, and that it unpacks
+-- single element arrays.
 saveTask : Task -> Cmd Msg
 saveTask task =
     let
-        (url, method) = case task.id  of
+        (url, method, msg) = case task.id  of
             Just id ->
                 ( apiUrl ++ "?id=eq." ++ toString(id)
                 , "PATCH"
+                , OnSave
                 )
-            Nothing -> (apiUrl, "POST")
+            Nothing -> (apiUrl, "POST", OnAdd)
         body = Http.jsonBody (taskEncoder task)
         request = Http.request
             { method = method
-            , headers = []
+            , headers =
+                [ Http.header "Prefer" "return=representation"
+                , Http.header "Accept" "application/vnd.pgrst.object+json"
+                ]
             , url = url
             , body = body
-            , expect = Http.expectJson apiErrorDecoder
+            , expect = Http.expectJson taskDecoder
             , timeout = Nothing
             , withCredentials = False
             }
-    in Http.send OnAdd request
+    in Http.send msg request
 
 
 deleteTask : Task -> Cmd Msg
@@ -174,7 +183,7 @@ deleteTask task =
             , headers = []
             , url = apiUrl ++ "?id=eq." ++ toString (id)
             , body = Http.emptyBody
-            , expect = Http.expectJson apiErrorDecoder
+            , expect = Http.expectStringResponse (\x -> Ok ())
             , timeout = Nothing
             , withCredentials = False
             }
@@ -197,18 +206,11 @@ taskDecoder = Decode.map3 makeTask
 taskEncoder : Task -> Encode.Value
 taskEncoder task =
     let
-        idEncoder = case task.id of
-            Just id -> Encode.int id
-            Nothing -> Encode.null
-    in
-        Encode.object
-        [ ("id", idEncoder)
-        , ("description", (Encode.string task.description))
-        , ("is_complete", (Encode.bool task.isComplete))
-        ]
-
--- Mismatched decoder
-apiErrorDecoder : Decode.Decoder (Maybe ApiError)
-apiErrorDecoder = Decode.map
-    (Maybe.map ApiError)
-    (Decode.maybe (Decode.field "message" Decode.string))
+        start = case task.id of
+            Just id -> [ ("id", Encode.int id) ]
+            Nothing -> []
+        end =
+            [ ("description", (Encode.string task.description))
+            , ("is_complete", (Encode.bool task.isComplete))
+            ]
+    in Encode.object (start ++ end)
