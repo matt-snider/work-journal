@@ -91,7 +91,8 @@ update msg model =
 view : Model -> Html Msg
 view model =
     div []
-    [ ul [] (List.map listItem (Array.toIndexedList model))
+    [ h1 [] [ text "Work Journal" ]
+    , ul [] (List.map listItem (Array.toIndexedList model))
     , button [ onClick Add ] [ text "Add" ]
     ]
 
