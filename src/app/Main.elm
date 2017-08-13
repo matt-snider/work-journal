@@ -36,16 +36,20 @@ type Msg
     | EditIsComplete  Int Bool
     | Delete Int
     | OnAdd (Result Http.Error (Maybe ApiError))
+    | OnDelete (Result Http.Error (Maybe ApiError))
     | Load (Result Http.Error (Array.Array Task))
 
 
-deleteItem : Int -> Model -> Model
+deleteItem : Int -> Model -> (Model, Cmd Msg)
 deleteItem index model =
     let
-        start = Array.slice 0 index model
-        end   = Array.slice (index + 1) (Array.length model) model
-    in
-        Array.append start end
+        start    = Array.slice 0 index model
+        end      = Array.slice (index + 1) (Array.length model) model
+        toDelete = Array.get index model
+        command  = case toDelete of
+            Just t  -> deleteTask t
+            Nothing -> Cmd.none
+    in (Array.append start end, command)
 
 
 addItem : Model -> Model
@@ -71,7 +75,7 @@ update msg model =
   case msg of
     -- Add -> List.append [newTask] model
     Add -> (addItem model, Cmd.none)
-    Delete index -> (deleteItem index model, Cmd.none)
+    Delete index -> deleteItem index model
     EditDescription index description ->
         updateItem index model (\t -> { t | description = description })
 
@@ -82,6 +86,8 @@ update msg model =
     Load (Err _) -> (model, Cmd.none)
     OnAdd (Ok _) -> (model, Cmd.none)
     OnAdd (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+    OnDelete (Ok _) -> (model, Cmd.none)
+    OnDelete (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
 
 -- View
@@ -133,10 +139,24 @@ saveTask task =
             , timeout = Nothing
             , withCredentials = False
             }
-    in
-        Http.send OnAdd request
+    in Http.send OnAdd request
 
 
+deleteTask : Task -> Cmd Msg
+deleteTask task =
+    let
+        request id = Http.request
+            { method = "DELETE"
+            , headers = []
+            , url = apiUrl ++ "?id=eq." ++ toString (id)
+            , body = Http.emptyBody
+            , expect = Http.expectJson apiErrorDecoder
+            , timeout = Nothing
+            , withCredentials = False
+            }
+    in case task.id of
+            Just id -> Http.send OnDelete (request id)
+            Nothing -> Cmd.none
 
 -- JSON encoders/decoders
 tasksDecoder : Decode.Decoder (Array.Array Task)
