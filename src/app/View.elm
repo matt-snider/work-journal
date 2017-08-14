@@ -1,11 +1,10 @@
-module View exposing (..)
+module View exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Models exposing (..)
-import Messages exposing (..)
 import Json.Decode as Decode
+import Types exposing (..)
 import Array
 
 

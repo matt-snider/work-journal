@@ -1,12 +1,20 @@
-module Update exposing (update)
+module State exposing (init, update, subscriptions)
 
-import Messages exposing (..)
-import Models exposing (Task, Model, newTask)
-import Array exposing (Array)
+import Types exposing (..)
+import Api
+import Array
 import Debug
-import Commands
+
+-- Init
+init : (Model, Cmd Msg)
+init = (Array.empty, Api.getTasks)
 
 
+-- Subs
+subscriptions : Model -> Sub Msg
+subscriptions = (\x -> Sub.none)
+
+-- Update
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
@@ -16,11 +24,11 @@ update msg model =
 
     EditDescription index description ->
         let (newModel, task) = updateItem index model (\t -> { t | description = description, isEditing = False})
-        in (newModel, Commands.saveTask task)
+        in (newModel, Api.saveTask task)
 
     EditStatus index isComplete ->
         let (newModel, task) = updateItem index model (\t -> { t | isComplete = isComplete })
-        in (newModel, Commands.saveTask task)
+        in (newModel, Api.saveTask task)
 
     StartEdit index ->
         let (newModel, task) = updateItem index model (\t -> { t | isEditing = True })
@@ -44,13 +52,13 @@ deleteItem index model =
         end      = Array.slice (index + 1) (Array.length model) model
         toDelete = Array.get index model
         command  = case toDelete of
-            Just t  -> Commands.deleteTask t
+            Just t  -> Api.deleteTask t
             Nothing -> Cmd.none
     in (Array.append start end, command)
 
 
 addItem : Model -> (Model, Cmd Msg)
-addItem model = (model, Commands.saveTask newTask)
+addItem model = (model, Api.saveTask newTask)
 
 
 updateItem : Int -> Model -> (Task -> Task) -> (Model, Task)

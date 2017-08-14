@@ -1,15 +1,15 @@
-import Html
-import Array
+module Main exposing (main)
 
-import Update exposing (update)
+
+import State exposing (init, update, subscriptions)
 import View exposing (view)
-import Commands
+import Html
 
 
 main =
     Html.program
         { view = view
         , update = update
-        , init = (Array.empty, Commands.getTasks)
-        , subscriptions = (\x -> Sub.none)
+        , init = init
+        , subscriptions = subscriptions
         }

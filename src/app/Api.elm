@@ -1,15 +1,14 @@
-module Commands exposing (..)
+module Api exposing (..)
 
-import Messages exposing (..)
-import Models exposing (Task, Model)
+import Types exposing (..)
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Array exposing (Array)
 import Http
+
 
 apiUrl = "http://localhost:3000/tasks"
 
-
+-- Get all tasks
 getTasks : Cmd Msg
 getTasks = Http.send Load
     <| Http.get apiUrl tasksDecoder
@@ -62,7 +61,7 @@ deleteTask task =
             Nothing -> Cmd.none
 
 -- JSON encoders/decoders
-tasksDecoder : Decode.Decoder (Array Task)
+tasksDecoder : Decode.Decoder (Model)
 tasksDecoder = Decode.array taskDecoder
 
 
