@@ -1,4 +1,4 @@
-module Types exposing (..)
+module App.Types exposing (..)
 
 import TaskList.Types
 

@@ -1,10 +1,10 @@
-module State exposing (init, update, subscriptions)
+module App.State exposing (init, update, subscriptions)
 
 import Array
 import Debug
 
 import TaskList.State
-import Types exposing (..)
+import App.Types exposing (..)
 
 
 -- Init

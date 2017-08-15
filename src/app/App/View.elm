@@ -1,11 +1,11 @@
-module View exposing (view)
+module App.View exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 
 import TaskList.View
-import Types exposing (..)
+import App.Types exposing (..)
 
 
 view : Model -> Html Msg
