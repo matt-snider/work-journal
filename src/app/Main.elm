@@ -1,6 +1,5 @@
 module Main exposing (main)
 
-
 import State exposing (init, update, subscriptions)
 import View exposing (view)
 import Html

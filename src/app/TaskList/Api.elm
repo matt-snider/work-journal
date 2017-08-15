@@ -1,11 +1,13 @@
-module Api exposing (..)
+module TaskList.Api exposing (..)
 
-import Types exposing (..)
+import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Http
+
+import TaskList.Types exposing (..)
 
 
+-- This should come from a config file or env
 apiUrl = "http://localhost:3000/tasks"
 
 -- Get all tasks
