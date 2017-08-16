@@ -57,7 +57,7 @@ update msg model =
         )
 
     OnDelete (Ok task) ->
-        ( Array.filter (\x -> x /= task) model
+        ( Array.filter (\x -> x.id /= task.id) model
         , Cmd.none
         )
 
