@@ -6,7 +6,6 @@ import Html.Events exposing (..)
 
 import App.Types exposing (..)
 import TaskList.View
-import Utils.Events exposing (onInputBlur)
 
 
 -- TODO: Add should happen onInputBlur or enter
@@ -21,6 +20,6 @@ view model =
         div []
         [ h1 [] [ text "Work Journal" ]
         , taskListView
-        , input [ placeholder "Enter a task", onInputBlur Add ] []
-        , button [ onClick New ] [ text "Add" ]
+        , input [ placeholder "Enter a task", onInput EditNew ] []
+        , button [ onClick (Add model.newTaskDescription) ] [ text "Add" ]
         ]

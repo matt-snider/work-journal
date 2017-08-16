@@ -5,13 +5,13 @@ import TaskList.Types
 
 -- App model
 type alias Model =
-    { taskListModel : TaskList.Types.Model
-    , isAddingNew   : Bool
+    { taskListModel      : TaskList.Types.Model
+    , newTaskDescription : String
     }
 
 
 -- Message types
 type Msg
-    = New
-    | Add String
+    =  Add String
+    | EditNew String
     | TaskListMsg TaskList.Types.Msg

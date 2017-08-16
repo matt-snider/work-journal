@@ -19,8 +19,8 @@ init =
             [ Cmd.map TaskListMsg taskListCmd ]
 
         model =
-            { taskListModel = taskListModel
-            , isAddingNew   = False
+            { taskListModel      = taskListModel
+            , newTaskDescription = ""
             }
     in
         ( model
@@ -43,14 +43,17 @@ subscriptions model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    New ->
-        ( { model | isAddingNew = True}
-        , Cmd.none
-        )
-
     Add description ->
         -- Pass off to handler below
-        update (TaskListMsg (TaskList.Types.New description)) model
+        let
+            msg = TaskListMsg (TaskList.Types.New model.newTaskDescription)
+        in
+            update msg { model | newTaskDescription = "" }
+
+    EditNew description ->
+        ( { model | newTaskDescription = description }
+        , Cmd.none
+        )
 
     TaskListMsg taskListMsg ->
         let
