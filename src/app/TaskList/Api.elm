@@ -1,5 +1,6 @@
 module TaskList.Api exposing (..)
 
+import Array
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -12,7 +13,7 @@ apiUrl = "http://localhost:3000/tasks"
 
 -- Get all tasks
 getTasks : Cmd Msg
-getTasks = Http.send Load
+getTasks = Http.send OnLoad
     <| Http.get apiUrl tasksDecoder
 
 
@@ -49,27 +50,27 @@ saveTask task =
 deleteTask : Task -> Cmd Msg
 deleteTask task =
     let
-        request id = Http.request
+        request tid = Http.request
             { method = "DELETE"
             , headers = []
-            , url = apiUrl ++ "?id=eq." ++ toString (id)
+            , url = apiUrl ++ "?id=eq." ++ toString (tid)
             , body = Http.emptyBody
-            , expect = Http.expectStringResponse (\x -> Ok ())
+            , expect = Http.expectStringResponse (\x -> Ok task)
             , timeout = Nothing
             , withCredentials = False
             }
     in case task.id of
-            Just id -> Http.send OnDelete (request id)
+            Just tid -> Http.send OnDelete (request tid)
             Nothing -> Cmd.none
 
 -- JSON encoders/decoders
-tasksDecoder : Decode.Decoder (Model)
+tasksDecoder : Decode.Decoder (Array.Array Task)
 tasksDecoder = Decode.array taskDecoder
 
 
 taskDecoder : Decode.Decoder Task
 taskDecoder = Decode.map3 makeTask
-    (Decode.at ["id"] (Decode.nullable Decode.int))
+    (Decode.at ["id"] Decode.int)
     (Decode.at ["description"] Decode.string)
     (Decode.at ["is_complete"] Decode.bool)
 
@@ -86,6 +87,13 @@ taskEncoder task =
             ]
     in Encode.object (start ++ end)
 
+
 -- Build a task without providing isEditing
-makeTask : Maybe Int -> String -> Bool -> Task
-makeTask a b c = Task a b c False
+makeTask : Int -> String -> Bool -> Task
+makeTask tid description isComplete =
+    { id          = Just tid
+    , description = description
+    , isComplete  = isComplete
+    , isEditing   = False
+    , isUpdating  = False
+    }

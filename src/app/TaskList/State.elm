@@ -1,6 +1,6 @@
 module TaskList.State exposing (init, subscriptions, update)
 
-import Array
+import Array exposing (Array)
 
 import TaskList.Types exposing (..)
 import TaskList.Api as Api
@@ -20,57 +20,74 @@ subscriptions = (\x -> Sub.none)
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
-    Add -> addItem model
+    New description ->
+        ( model
+        , Api.saveTask (newTask description)
+        )
 
-    Delete index -> deleteItem index model
+    StartEdit task ->
+        ( replace model { task | isEditing = True }
+        , Cmd.none
+        )
 
-    EditDescription index description ->
-        let (newModel, task) = updateItem index model (\t -> { t | description = description, isEditing = False})
-        in (newModel, Api.saveTask task)
+    DoneEdit task description ->
+        ( replace model { task | isUpdating = True }
+        , Api.saveTask { task | description = description }
+        )
 
-    EditStatus index isComplete ->
-        let (newModel, task) = updateItem index model (\t -> { t | isComplete = isComplete })
-        in (newModel, Api.saveTask task)
+    Delete task ->
+        ( replace model { task | isUpdating = True }
+        , Api.deleteTask task
+        )
 
-    StartEdit index ->
-        let (newModel, task) = updateItem index model (\t -> { t | isEditing = True })
-        in (newModel, Cmd.none)
+    ToggleComplete task isComplete ->
+        ( replace model { task | isUpdating = True }
+        , Api.saveTask { task | isComplete = True }
+        )
 
-    Load (Ok tasks) -> (tasks, Cmd.none)
-    Load (Err _) -> (model, Cmd.none)
-    OnAdd (Ok t) -> (Array.push {t | isEditing = True} model, Cmd.none)
-    OnAdd (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
-    OnSave (Ok _) -> (model, Cmd.none)
-    OnSave (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
-    OnDelete (Ok _) -> (model, Cmd.none)
-    OnDelete (Err err) -> (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+    -- Command handlers
+    OnAdd (Ok task) ->
+        ( Array.push task model
+        , Cmd.none
+        )
+
+    OnSave (Ok task) ->
+        ( replace model task
+        , Cmd.none
+        )
+
+    OnDelete (Ok task) ->
+        ( Array.filter (\x -> x /= task) model
+        , Cmd.none
+        )
+
+    OnLoad (Ok tasks) ->
+        ( tasks
+        , Cmd.none
+        )
+
+    -- Error handlers
+    OnAdd (Err err) ->
+        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+
+    OnLoad (Err _) ->
+        (model, Cmd.none)
+
+    OnSave (Err err) ->
+        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+
+    OnDelete (Err err) ->
+        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
 
--- Helpers
-deleteItem : Int -> Model -> (Model, Cmd Msg)
-deleteItem index model =
+-- Utils
+replace : Array Task -> Task -> Array Task
+replace arr obj =
     let
-        start    = Array.slice 0 index model
-        end      = Array.slice (index + 1) (Array.length model) model
-        toDelete = Array.get index model
-        command  = case toDelete of
-            Just t  -> Api.deleteTask t
-            Nothing -> Cmd.none
-    in (Array.append start end, command)
-
-
-addItem : Model -> (Model, Cmd Msg)
-addItem model = (model, Api.saveTask newTask)
-
-
-updateItem : Int -> Model -> (Task -> Task) -> (Model, Task)
-updateItem index model updater =
-    let updatedTask = Maybe.map updater (Array.get index model)
-    in case updatedTask of
-        Just t -> (Array.set index t model, t)
-        Nothing -> (model, newTask)
-
-
-
-
-
+        maybeMerge x =
+            if obj.id == x.id then
+                obj
+            else
+                x
+    in
+        Array.map maybeMerge arr

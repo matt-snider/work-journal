@@ -4,6 +4,7 @@ import Array
 import Debug
 
 import TaskList.State
+import TaskList.Types
 import App.Types exposing (..)
 
 
@@ -18,10 +19,13 @@ init =
             [ Cmd.map TaskListMsg taskListCmd ]
 
         model =
-            { tasks = taskListModel
+            { taskListModel = taskListModel
+            , isAddingNew   = False
             }
     in
-        (model , commands)
+        ( model
+        , commands
+        )
 
 
 -- Subs
@@ -29,7 +33,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     let
         taskListSub =
-            TaskList.State.subscriptions model.tasks
+            TaskList.State.subscriptions model.taskListModel
     in
         Sub.batch
             [ Sub.map TaskListMsg taskListSub ]
@@ -39,9 +43,20 @@ subscriptions model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
+    New ->
+        ( { model | isAddingNew = True}
+        , Cmd.none
+        )
+
+    Add description ->
+        -- Pass off to handler below
+        update (TaskListMsg (TaskList.Types.New description)) model
+
     TaskListMsg taskListMsg ->
         let
-            ( newModel, command ) =
-                TaskList.State.update taskListMsg model.tasks
+            ( newTaskListModel, command ) =
+                TaskList.State.update taskListMsg model.taskListModel
         in
-            ( { model | tasks = newModel }, Cmd.map TaskListMsg command )
+            ( { model | taskListModel = newTaskListModel }
+            , Cmd.map TaskListMsg command
+            )

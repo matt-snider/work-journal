@@ -7,34 +7,29 @@ import Html.Events exposing (..)
 import Json.Decode as Decode
 
 import TaskList.Types exposing (..)
+import Utils.Events exposing (onInputBlur)
 
 
 view : Model -> Html Msg
 view model =
     div []
-    [ ul [] (List.map listItem (Array.toIndexedList model))
-    , button [ onClick Add ] [ text "Add" ]
+    [ ul [] (List.map taskView (Array.toList model))
     ]
 
 
-listItem : (Int, Task) -> Html Msg
-listItem (index, t) =
-    li []
-    [ input [type_ "checkbox", onCheck (EditStatus index), checked t.isComplete ] []
-    , maybeInput t index
-    , button [ onClick (Delete index) ] [ text "X" ]
-    ]
+taskView : Task -> Html Msg
+taskView task =
+    div []
+        [ input [ type_ "checkbox", onCheck (ToggleComplete task)  ]  []
+        , maybeInput task
+        , button [ onClick (Delete task) ] [ text "X" ]
+        ]
 
-
-onInputBlur : (String -> msg) -> Attribute msg
-onInputBlur tagger =
-    on "blur" (Decode.map tagger targetValue)
-
-
-maybeInput : Task -> Int -> Html Msg
-maybeInput task index =
+-- TODO: react to enter as well
+-- TODO: show updating indicator for isUpdating
+maybeInput : Task -> Html Msg
+maybeInput task =
     if task.isEditing == True then
-        input [ placeholder "Enter a task", onInputBlur (EditDescription index), value task.description ] []
+        input [ placeholder "Enter a task", onInputBlur (DoneEdit task), value task.description ] []
     else
-        span [ onClick (StartEdit index) ] [ text task.description ]
-
+        span [ onClick (StartEdit task) ] [ text task.description ]

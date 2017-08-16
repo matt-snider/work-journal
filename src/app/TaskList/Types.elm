@@ -11,31 +11,37 @@ type alias Model = Array Task
 -- Task model
 -- TODO: try and get rid of Maybe Int
 -- with a separate editing model perhaps
+-- TODO: using completed, editing and updating instead
 type alias Task =
     { id          : Maybe Int
     , description : String
     , isComplete : Bool
     , isEditing  : Bool
+    , isUpdating : Bool
     }
 
 
 -- Create new tasks with convenient defaults
-newTask : Task
-newTask = Task Nothing "" False True
+newTask : String -> Task
+newTask description =
+    { id          = Nothing
+    , description = description
+    , isComplete  = False
+    , isEditing   = False
+    , isUpdating  = False
+    }
 
 
 -- TaskList specific messages
--- TODO: figure out which belong here
--- and which at top-level
 type Msg
-    = Add
-    | EditDescription Int String
-    | EditStatus  Int Bool
-    | Delete Int
-    | StartEdit Int
+    = New String
+    | StartEdit Task
+    | DoneEdit Task String
+    | ToggleComplete Task Bool
+    | Delete Task
 
-    -- API tasks
-    | OnAdd (Result Error Task)
-    | OnSave (Result Error Task)
-    | OnDelete (Result Error ())
-    | Load (Result Error (Array Task))
+    -- Http msgs
+    | OnAdd  (Result Error Task)
+    | OnSave  (Result Error Task)
+    | OnDelete  (Result Error Task)
+    | OnLoad (Result Error (Array Task))
