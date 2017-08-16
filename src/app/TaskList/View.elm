@@ -7,7 +7,7 @@ import Html.Events exposing (..)
 import Json.Decode as Decode
 
 import TaskList.Types exposing (..)
-import Utils.Events exposing (onInputBlur)
+import Utils.Events exposing (..)
 
 
 view : Model -> Html Msg
@@ -25,11 +25,16 @@ taskView task =
         , button [ onClick (Delete task) ] [ text "X" ]
         ]
 
--- TODO: react to enter as well
 -- TODO: show updating indicator for isUpdating
 maybeInput : Task -> Html Msg
 maybeInput task =
     if task.isEditing == True then
-        input [ placeholder "Enter a task", onInputBlur (DoneEdit task), value task.description ] []
+        input
+            [ placeholder "Enter a task"
+            , onInputBlur  (DoneEdit task)
+            , onInputEnter (DoneEdit task)
+            , value task.description
+            ]
+            []
     else
         span [ onClick (StartEdit task) ] [ text task.description ]
