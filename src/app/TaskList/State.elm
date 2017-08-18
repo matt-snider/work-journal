@@ -31,9 +31,18 @@ update msg model =
         )
 
     DoneEdit task description ->
-        ( replace model { task | isUpdating = True }
-        , Api.saveTask { task | description = description }
-        )
+        -- DoneEdit is thrown multiple times due to
+        -- onEnter and onBlur event listeners
+        -- This acts as debouncing of sorts
+        case task.isUpdating of
+            False ->
+                ( replace model { task | isUpdating = True }
+                , Api.saveTask { task | description = description }
+                )
+            True ->
+                ( model
+                , Cmd.none
+                )
 
     Delete task ->
         ( replace model { task | isUpdating = True }

@@ -26,6 +26,8 @@ taskView task =
         ]
 
 -- TODO: show updating indicator for isUpdating
+-- TODO: when enter is pressed, blur also thrown
+-- currently handling this in DoneEdit update hook
 maybeInput : Task -> Html Msg
 maybeInput task =
     if task.isEditing == True then
