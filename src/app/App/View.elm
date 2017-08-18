@@ -19,6 +19,13 @@ view model =
         div []
         [ h1 [] [ text "Work Journal" ]
         , taskListView
-        , input [ placeholder "Enter a task", onInput EditNew, value model.newTaskDescription ] []
-        , button [ onClick (Add model.newTaskDescription) ] [ text "Add" ]
+        , input
+            [ placeholder "Enter a task"
+            , onInput EditNew
+            , value model.newTaskDescription
+            ]
+            []
+        , button
+            [ onClick (Add model.newTaskDescription) ]
+            [ text "Add" ]
         ]

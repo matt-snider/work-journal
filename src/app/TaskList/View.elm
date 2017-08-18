@@ -20,9 +20,13 @@ view model =
 taskView : Task -> Html Msg
 taskView task =
     div []
-        [ input [ type_ "checkbox", onCheck (ToggleComplete task)  ]  []
+        [ input
+            [ type_ "checkbox", onCheck (ToggleComplete task)  ]
+            []
         , maybeInput task
-        , button [ onClick (Delete task) ] [ text "X" ]
+        , button
+            [ onClick (Delete task) ]
+            [ text "X" ]
         ]
 
 -- TODO: show updating indicator for isUpdating
@@ -39,4 +43,6 @@ maybeInput task =
             ]
             []
     else
-        span [ onClick (StartEdit task) ] [ text task.description ]
+        span
+            [ onClick (StartEdit task) ]
+            [ text task.description ]
