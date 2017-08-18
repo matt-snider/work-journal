@@ -53,11 +53,9 @@ maybeInput task =
 
 maybeLoadingIndicator : Task -> Html Msg
 maybeLoadingIndicator task =
-    let
-        contents =
-            if task.isUpdating then
-                [ text "Loading..." ]
-            else
-                []
-    in
-        span [] contents
+    if task.isUpdating then
+        img
+            [ src "assets/loader.gif" ]
+            []
+    else
+        span [] []
