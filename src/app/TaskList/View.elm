@@ -34,15 +34,30 @@ taskView task =
 -- currently handling this in DoneEdit update hook
 maybeInput : Task -> Html Msg
 maybeInput task =
-    if task.isEditing == True then
-        input
-            [ placeholder "Enter a task"
-            , onInputBlur  (DoneEdit task)
-            , onInputEnter (DoneEdit task)
-            , value task.description
+    if task.isEditing then
+        div []
+            [ input
+                [ placeholder "Enter a task"
+                , onInputBlur  (DoneEdit task)
+                , onInputEnter (DoneEdit task)
+                , value task.description
+                ]
+                []
+            , maybeLoadingIndicator task
             ]
-            []
     else
         span
             [ onClick (StartEdit task) ]
             [ text task.description ]
+
+
+maybeLoadingIndicator : Task -> Html Msg
+maybeLoadingIndicator task =
+    let
+        contents =
+            if task.isUpdating then
+                [ text "Loading..." ]
+            else
+                []
+    in
+        span [] contents
