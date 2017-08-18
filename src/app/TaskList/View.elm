@@ -24,9 +24,6 @@ taskView task =
             [ type_ "checkbox", onCheck (ToggleComplete task)  ]
             []
         , maybeInput task
-        , button
-            [ onClick (Delete task) ]
-            [ text "X" ]
         ]
 
 -- TODO: show updating indicator for isUpdating
@@ -35,7 +32,7 @@ taskView task =
 maybeInput : Task -> Html Msg
 maybeInput task =
     if task.isEditing then
-        div []
+        span []
             [ input
                 [ placeholder "Enter a task"
                 , onInputBlur  (DoneEdit task)
@@ -48,7 +45,11 @@ maybeInput task =
     else
         span
             [ onClick (StartEdit task) ]
-            [ text task.description ]
+            [ text task.description
+            , button
+                [ onClick (Delete task) ]
+                [ text "X" ]
+            ]
 
 
 maybeLoadingIndicator : Task -> Html Msg
