@@ -36,8 +36,47 @@ CREATE FUNCTION insert_task()
     $$ LANGUAGE plpgsql;
 
 
+CREATE FUNCTION update_task()
+    RETURNS trigger AS $$
+    DECLARE
+        note json;
+        result record;
+    BEGIN
+        UPDATE models.tasks
+            SET description = new.description
+              , is_complete = new.is_complete
+            WHERE id = new.id;
+
+        FOR note IN SELECT * FROM json_array_elements(new.notes)
+        LOOP
+            IF (note -> 'id') IS NOT NULL THEN
+                UPDATE models.notes
+                    SET content = note ->> 'content'
+                    WHERE id = (note ->> 'id')::int
+                        AND task_id = new.id;
+            ELSE
+                INSERT INTO models.notes (content, task_id)
+                    VALUES (note ->> 'content', new.id);
+            END IF;
+        END LOOP;
+
+        -- Use our view to return the result
+        -- including new id and notes
+        SELECT * INTO result FROM api.tasks WHERE id = new.id;
+        RETURN result;
+    END;
+    $$ LANGUAGE plpgsql;
+
+
 CREATE TRIGGER tasks_view_insert_trigger
     INSTEAD OF INSERT
     ON tasks
     FOR EACH ROW
     EXECUTE PROCEDURE insert_task();
+
+
+CREATE TRIGGER tasks_view_update_trigger
+    INSTEAD OF UPDATE
+    ON tasks
+    FOR EACH ROW
+    EXECUTE PROCEDURE update_task();
