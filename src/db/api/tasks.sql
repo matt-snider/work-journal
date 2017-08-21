@@ -12,7 +12,7 @@ CREATE VIEW tasks AS
     GROUP BY t.id;
 
 
-CREATE OR REPLACE FUNCTION api.insert_task()
+CREATE FUNCTION insert_task()
     RETURNS trigger AS $$
     DECLARE
         task_id bigint;
@@ -23,6 +23,11 @@ CREATE OR REPLACE FUNCTION api.insert_task()
         VALUES (new.description, false)
         RETURNING id INTO task_id;
 
+        -- Insert any notes
+        INSERT INTO models.notes (content, task_id)
+            SELECT *, task_id AS task_id
+            FROM json_to_recordset(new.notes) AS x(content text);
+
         -- Use our view to return the result
         -- including new id and notes
         SELECT * INTO result FROM api.tasks WHERE id = task_id;
@@ -31,7 +36,7 @@ CREATE OR REPLACE FUNCTION api.insert_task()
     $$ LANGUAGE plpgsql;
 
 
-CREATE TRIGGER tasks_update
+CREATE TRIGGER tasks_view_insert_trigger
     INSTEAD OF INSERT
     ON tasks
     FOR EACH ROW
