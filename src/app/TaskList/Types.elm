@@ -16,8 +16,15 @@ type alias Task =
     { id          : Maybe Int
     , description : String
     , isComplete : Bool
+    , notes      : Array Note
     , isEditing  : Bool
     , isUpdating : Bool
+    }
+
+
+type alias Note =
+    { id       : Maybe Int
+    , content  : String
     }
 
 
@@ -27,6 +34,7 @@ newTask description =
     { id          = Nothing
     , description = description
     , isComplete  = False
+    , notes       = Array.empty
     , isEditing   = False
     , isUpdating  = False
     }

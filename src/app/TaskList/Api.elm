@@ -69,10 +69,11 @@ tasksDecoder = Decode.array taskDecoder
 
 
 taskDecoder : Decode.Decoder Task
-taskDecoder = Decode.map3 makeTask
+taskDecoder = Decode.map4 makeTask
     (Decode.at ["id"] Decode.int)
     (Decode.at ["description"] Decode.string)
     (Decode.at ["is_complete"] Decode.bool)
+    (Decode.at ["notes"] (Decode.array noteDecoder))
 
 
 taskEncoder : Task -> Encode.Value
@@ -88,12 +89,26 @@ taskEncoder task =
     in Encode.object (start ++ end)
 
 
+noteDecoder : Decode.Decoder Note
+noteDecoder = Decode.map2 makeNote
+    (Decode.at ["id"] Decode.int)
+    (Decode.at ["content"] Decode.string)
+
+
 -- Build a task without providing isEditing
-makeTask : Int -> String -> Bool -> Task
-makeTask tid description isComplete =
+makeTask : Int -> String -> Bool -> Array.Array Note -> Task
+makeTask tid description isComplete notes =
     { id          = Just tid
     , description = description
     , isComplete  = isComplete
+    , notes       = notes
     , isEditing   = False
     , isUpdating  = False
+    }
+
+
+makeNote : Int -> String -> Note
+makeNote nid content =
+    { id      = Just nid
+    , content = content
     }

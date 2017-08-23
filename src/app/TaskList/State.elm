@@ -79,8 +79,8 @@ update msg model =
     OnAdd (Err err) ->
         (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
-    OnLoad (Err _) ->
-        (model, Cmd.none)
+    OnLoad (Err err) ->
+        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
     OnSave (Err err) ->
         (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
