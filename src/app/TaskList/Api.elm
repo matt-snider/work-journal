@@ -85,6 +85,7 @@ taskEncoder task =
         end =
             [ ("description", (Encode.string task.description))
             , ("is_complete", (Encode.bool task.isComplete))
+            , ("notes", (Encode.array (Array.map noteEncoder task.notes)))
             ]
     in Encode.object (start ++ end)
 
@@ -93,6 +94,17 @@ noteDecoder : Decode.Decoder Note
 noteDecoder = Decode.map2 makeNote
     (Decode.at ["id"] Decode.int)
     (Decode.at ["content"] Decode.string)
+
+
+noteEncoder : Note -> Encode.Value
+noteEncoder note =
+    let
+        start = case note.id of
+            Just id -> [ ("id", Encode.int id) ]
+            Nothing -> []
+        end =
+            [ ("content", (Encode.string note.content))]
+    in Encode.object (start ++ end)
 
 
 -- Build a task without providing isEditing
