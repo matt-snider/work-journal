@@ -25,7 +25,9 @@ taskView task =
             []
         , maybeInput task
         , maybeLoadingIndicator task
+        , ul [] (List.map note (Array.toList task.notes))
         ]
+
 
 -- TODO: show updating indicator for isUpdating
 -- TODO: when enter is pressed, blur also thrown
@@ -62,3 +64,6 @@ maybeLoadingIndicator task =
             []
     else
         span [] []
+
+note : Note -> Html Msg
+note n = li [] [ text n.content ]
