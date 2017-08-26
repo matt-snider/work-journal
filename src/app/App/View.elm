@@ -26,23 +26,32 @@ view model =
                 }
             ]
 
-        , TaskList.View.view model.taskListModel
-            |> Html.map TaskListMsg
+        , Ui.Container.column
+            [ contentStyle ]
+            [ TaskList.View.view model.taskListModel
+                |> Html.map TaskListMsg
 
-        , Ui.Container.row
-            []
-            [ Ui.Input.view
-                model.newTaskModel
-                |> Html.map NewTaskMsg
+            , Ui.Container.row
+                []
+                [ Ui.Input.view
+                    model.newTaskModel
+                    |> Html.map NewTaskMsg
 
-            , Ui.Button.view
-                (Add model.newTaskModel.value)
-                { disabled = False
-                , readonly = False
-                , kind = "primary"
-                , size = "medium"
-                , text = "Add"
-                }
+                , Ui.Button.view
+                    (Add model.newTaskModel.value)
+                    { disabled = False
+                    , readonly = False
+                    , kind = "primary"
+                    , size = "medium"
+                    , text = "Add"
+                    }
 
+                ]
             ]
         ]
+
+
+contentStyle : Attribute msg
+contentStyle = style
+    [ ("padding", "15px")
+    ]

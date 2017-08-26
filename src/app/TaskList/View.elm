@@ -4,7 +4,6 @@ import Array
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Json.Decode as Decode
 
 import TaskList.Types exposing (..)
 import Utils.Events exposing (..)
@@ -29,7 +28,6 @@ taskView task =
         ]
 
 
--- TODO: show updating indicator for isUpdating
 -- TODO: when enter is pressed, blur also thrown
 -- currently handling this in DoneEdit update hook
 maybeInput : Task -> Html Msg
