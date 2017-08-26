@@ -4,6 +4,8 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Ui.Header
+import Ui.Input
+import Ui.Button
 
 import App.Types exposing (..)
 import TaskList.View
@@ -29,14 +31,16 @@ view model =
 
         , taskListView
 
-        , input
-            [ placeholder "Enter a task"
-            , onInput EditNew
-            , value model.newTaskDescription
-            ]
-            []
+        , Ui.Input.view
+            model.newTaskModel
+            |> Html.map NewTaskMsg
 
-        , button
-            [ onClick (Add model.newTaskDescription) ]
-            [ text "Add" ]
+        , Ui.Button.view
+            (Add model.newTaskModel.value)
+            { disabled = False
+            , readonly = False
+            , kind = "primary"
+            , size = "medium"
+            , text = "Add"
+            }
         ]

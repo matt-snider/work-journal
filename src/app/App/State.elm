@@ -2,6 +2,7 @@ module App.State exposing (init, update, subscriptions)
 
 import Array
 import Debug
+import Ui.Input
 
 import TaskList.State
 import TaskList.Types
@@ -15,16 +16,16 @@ init =
         ( taskListModel, taskListCmd ) =
             TaskList.State.init
 
-        commands = Cmd.batch
-            [ Cmd.map TaskListMsg taskListCmd ]
-
-        model =
-            { taskListModel      = taskListModel
-            , newTaskDescription = ""
-            }
+        newTaskModel =
+            Ui.Input.init ()
+                |> Ui.Input.placeholder "Enter a task..."
     in
-        ( model
-        , commands
+        ( { taskListModel = taskListModel
+          , newTaskModel = newTaskModel
+          }
+
+        , Cmd.batch
+            [ Cmd.map TaskListMsg taskListCmd ]
         )
 
 
@@ -36,7 +37,10 @@ subscriptions model =
             TaskList.State.subscriptions model.taskListModel
     in
         Sub.batch
-            [ Sub.map TaskListMsg taskListSub ]
+            [ Sub.map TaskListMsg taskListSub
+            , Ui.Input.onChange EditNew model.newTaskModel
+            ]
+
 
 
 -- Update
@@ -44,22 +48,48 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     Add description ->
-        -- Pass off to handler below
         let
-            msg = TaskListMsg (TaskList.Types.New model.newTaskDescription)
+            ( newTaskModel, newTaskCmd ) =
+                Ui.Input.setValue "" model.newTaskModel
+
+            ( taskListModel, taskListCmd ) =
+                TaskList.State.update
+                    (TaskList.Types.New model.newTaskModel.value)
+                    model.taskListModel
         in
-            update msg { model | newTaskDescription = "" }
+            ( { model
+              | newTaskModel  = newTaskModel
+              , taskListModel = taskListModel
+              }
+
+            , Cmd.batch
+                [ Cmd.map NewTaskMsg newTaskCmd
+                , Cmd.map TaskListMsg taskListCmd
+                ]
+            )
 
     EditNew description ->
-        ( { model | newTaskDescription = description }
-        , Cmd.none
-        )
+        let
+            (newTaskModel, _) = Ui.Input.setValue description model.newTaskModel
+        in
+            ( { model | newTaskModel = newTaskModel }
+            , Cmd.none
+            )
 
     TaskListMsg taskListMsg ->
         let
             ( newTaskListModel, command ) =
-                TaskList.State.update taskListMsg model.taskListModel
+                TaskList.State.update (Debug.log "taskListMsg" taskListMsg) model.taskListModel
         in
             ( { model | taskListModel = newTaskListModel }
             , Cmd.map TaskListMsg command
+            )
+
+    NewTaskMsg newTaskMsg ->
+        let
+            (newTaskModel, cmd) =
+                Ui.Input.update (Debug.log "newTaskMsg" newTaskMsg) model.newTaskModel
+        in
+            ( { model | newTaskModel = newTaskModel }
+            , Cmd.map NewTaskMsg cmd
             )
