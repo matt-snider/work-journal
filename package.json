@@ -26,7 +26,7 @@
   },
   "homepage": "https://github.com/matt-snider/work-journal#readme",
   "dependencies": {
-    "elm": "^0.18.0",
-    "elm-github-install": "^1.4.0"
+    "elm": "0.18.0",
+    "elm-github-install": "1.4.0"
   }
 }
