@@ -7,9 +7,11 @@ CREATE VIEW tasks AS
                 FILTER (WHERE n.id IS NOT NULL),
             json_build_array()
         ) AS notes
-    FROM models.tasks t LEFT JOIN models.notes n
+    FROM models.tasks t
+        LEFT JOIN models.notes n
         ON t.id = n.task_id
-    GROUP BY t.id;
+    GROUP BY t.id
+    ORDER BY t.id;
 
 
 CREATE FUNCTION insert_task()
