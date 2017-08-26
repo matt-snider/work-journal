@@ -68,6 +68,21 @@ CREATE FUNCTION update_task()
     $$ LANGUAGE plpgsql;
 
 
+CREATE FUNCTION delete_task()
+    RETURNS trigger AS $$
+    BEGIN
+        -- Delete associated notes
+        DELETE FROM models.notes
+            WHERE task_id = old.id;
+
+        -- Delete the task
+        DELETE FROM models.tasks
+            WHERE id = old.id;
+        RETURN NULL;
+    END;
+    $$ LANGUAGE plpgsql;
+
+
 CREATE TRIGGER tasks_view_insert_trigger
     INSTEAD OF INSERT
     ON tasks
@@ -80,3 +95,10 @@ CREATE TRIGGER tasks_view_update_trigger
     ON tasks
     FOR EACH ROW
     EXECUTE PROCEDURE update_task();
+
+
+CREATE TRIGGER tasks_view_delete_trigger
+    INSTEAD OF DELETE
+    ON tasks
+    FOR EACH ROW
+    EXECUTE PROCEDURE delete_task();
