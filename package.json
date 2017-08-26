@@ -5,6 +5,7 @@
   "main": "src/app/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "install": "elm-install",
     "elm": "elm"
   },
   "repository": {
@@ -25,6 +26,7 @@
   },
   "homepage": "https://github.com/matt-snider/work-journal#readme",
   "dependencies": {
-    "elm": "^0.18.0"
+    "elm": "^0.18.0",
+    "elm-github-install": "^1.4.0"
   }
 }
