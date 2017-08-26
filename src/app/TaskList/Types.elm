@@ -2,6 +2,8 @@ module TaskList.Types exposing (..)
 
 import Array exposing (Array)
 import Http exposing (Error)
+import Ui.Input
+import Ui.Checkbox
 
 
 -- TaskList model
@@ -53,3 +55,6 @@ type Msg
     | OnSave  (Result Error Task)
     | OnDelete  (Result Error Task)
     | OnLoad (Result Error (Array Task))
+
+    | TaskInput Ui.Input.Msg
+    | TaskCheckbox Ui.Checkbox.Msg

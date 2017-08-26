@@ -4,6 +4,11 @@ import Array
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Ui.Checkbox
+import Ui.Container
+import Ui.IconButton
+import Ui.Icons
+import Ui.Input
 
 import TaskList.Types exposing (..)
 import Utils.Events exposing (..)
@@ -18,13 +23,40 @@ view model =
 
 taskView : Task -> Html Msg
 taskView task =
-    div []
-        [ input
-            [ type_ "checkbox", onCheck (ToggleComplete task)  ]
+    Ui.Container.column
+        [ ]
+        [ Ui.Container.row
             []
-        , maybeInput task
-        , maybeLoadingIndicator task
-        , ul [] (List.map note (Array.toList task.notes))
+            [ Ui.Checkbox.view
+                { disabled = False
+                , readonly = False
+                , value = task.isComplete
+                , uid = ""
+                }
+                |> Html.map TaskCheckbox
+
+            , maybeInput task
+
+            , Ui.IconButton.view
+                (Delete task)
+                { glyph = Ui.Icons.close []
+                , disabled = False
+                , readonly = False
+                , text = "Delete"
+                , kind = "primary"
+                , side = "right"
+                , size = "small"
+                }
+
+            , maybeLoadingIndicator task
+
+            ]
+
+        , Ui.Container.row
+            [ style
+                [ ("margin-left", "25px") ]
+            ]
+            [ ul [] (List.map note (Array.toList task.notes)) ]
         ]
 
 
@@ -32,26 +64,32 @@ taskView task =
 -- currently handling this in DoneEdit update hook
 maybeInput : Task -> Html Msg
 maybeInput task =
-    if task.isEditing then
-        span []
-            [ input
-                [ placeholder "Enter a task"
-                , onInputBlur  (DoneEdit task)
-                , onInputEnter (DoneEdit task)
-                , value task.description
+    let
+        children =
+            if task.isEditing then
+                [ Ui.Input.view
+                    { placeholder = ""
+                    , showClearIcon = False
+                    , disabled = False
+                    , readonly = False
+                    , value = task.description
+                    , kind = "text"
+                    , uid = ""
+                    }
+                    |> Html.map TaskInput
                 ]
-                []
-            ]
-    else
+            else
+                [ span
+                    [ onClick (StartEdit task) ]
+                    [ text task.description ]
+                ]
+    in
         span
-            [ ]
-            [ span
-                [ onClick (StartEdit task) ]
-                [ text task.description ]
-            , button
-                [ onClick (Delete task) ]
-                [ text "X" ]
+            [ style
+                [ ("width", "80%") ]
             ]
+            children
+
 
 
 maybeLoadingIndicator : Task -> Html Msg

@@ -54,6 +54,13 @@ update msg model =
         , Api.saveTask { task | isComplete = True }
         )
 
+    -- Sub handlers
+    TaskInput x ->
+        (model, Cmd.none)
+
+    TaskCheckbox x ->
+        (model, Cmd.none)
+
     -- Command handlers
     OnAdd (Ok task) ->
         ( Array.push task model
