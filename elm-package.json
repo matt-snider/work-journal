@@ -4,7 +4,8 @@
     "repository": "https://github.com/matt-snider/work-journal.git",
     "license": "MIT",
     "source-directories": [
-        "src/app"
+        "src/app",
+        "src/app/Components"
     ],
     "exposed-modules": [],
     "dependencies": {

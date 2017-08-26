@@ -25,41 +25,41 @@ update msg model =
         , Api.saveTask (newTask description)
         )
 
-    StartEdit task ->
-        ( replace model { task | isEditing = True }
-        , Cmd.none
-        )
+--     StartEdit task ->
+--         ( replace model { task | isEditing = True }
+--         , Cmd.none
+--         )
 
-    DoneEdit task description ->
-        -- DoneEdit is thrown multiple times due to
-        -- onEnter and onBlur event listeners
-        -- This acts as debouncing of sorts
-        case task.isUpdating of
-            False ->
-                ( replace model { task | isUpdating = True }
-                , Api.saveTask { task | description = description }
-                )
-            True ->
-                ( model
-                , Cmd.none
-                )
+--     DoneEdit task description ->
+--         -- DoneEdit is thrown multiple times due to
+--         -- onEnter and onBlur event listeners
+--         -- This acts as debouncing of sorts
+--         case task.isUpdating of
+--             False ->
+--                 ( replace model { task | isUpdating = True }
+--                 , Api.saveTask { task | description = description }
+--                 )
+--             True ->
+--                 ( model
+--                 , Cmd.none
+--                 )
 
-    Delete task ->
-        ( replace model { task | isUpdating = True }
-        , Api.deleteTask task
-        )
+--     Delete task ->
+--         ( replace model { task | isUpdating = True }
+--         , Api.deleteTask task
+--         )
 
-    ToggleComplete task isComplete ->
-        ( replace model { task | isUpdating = True }
-        , Api.saveTask { task | isComplete = True }
-        )
+--     ToggleComplete task isComplete ->
+--         ( replace model { task | isUpdating = True }
+--         , Api.saveTask { task | isComplete = True }
+--         )
 
-    -- Sub handlers
-    TaskInput x ->
-        (model, Cmd.none)
+--     -- Sub handlers
+-- :   TaskInput x ->
+--         (model, Cmd.none)
 
-    TaskCheckbox x ->
-        (model, Cmd.none)
+--     TaskCheckbox x ->
+--         (model, Cmd.none)
 
     -- Command handlers
     OnAdd (Ok task) ->
@@ -67,15 +67,15 @@ update msg model =
         , Cmd.none
         )
 
-    OnSave (Ok task) ->
-        ( replace model task
-        , Cmd.none
-        )
+    -- OnSave (Ok task) ->
+    --     ( replace model task
+    --     , Cmd.none
+    --     )
 
-    OnDelete (Ok task) ->
-        ( Array.filter (\x -> x.id /= task.id) model
-        , Cmd.none
-        )
+    -- OnDelete (Ok task) ->
+    --     ( Array.filter (\x -> x.id /= task.id) model
+    --     , Cmd.none
+    --     )
 
     OnLoad (Ok tasks) ->
         ( tasks
@@ -86,11 +86,11 @@ update msg model =
     OnAdd (Err err) ->
         (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
-    OnLoad (Err err) ->
-        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+    -- OnLoad (Err err) ->
+    --     (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
-    OnSave (Err err) ->
-        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
+    -- OnSave (Err err) ->
+    --     (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
     OnDelete (Err err) ->
         (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
