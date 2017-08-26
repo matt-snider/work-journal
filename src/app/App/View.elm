@@ -4,8 +4,9 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Ui.Header
-import Ui.Input
 import Ui.Button
+import Ui.Input
+import Ui.Container
 
 import App.Types exposing (..)
 import TaskList.View
@@ -14,12 +15,8 @@ import TaskList.View
 -- TODO: Add should happen onInputBlur or enter
 view : Model -> Html Msg
 view model =
-    let
-        taskListView =
-            TaskList.View.view model.taskListModel
-            |> Html.map TaskListMsg
-    in
-        div []
+    Ui.Container.column
+        []
         [ Ui.Header.view
             [ Ui.Header.title
                 { action = Nothing
@@ -29,18 +26,23 @@ view model =
                 }
             ]
 
-        , taskListView
+        , TaskList.View.view model.taskListModel
+            |> Html.map TaskListMsg
 
-        , Ui.Input.view
-            model.newTaskModel
-            |> Html.map NewTaskMsg
+        , Ui.Container.row
+            []
+            [ Ui.Input.view
+                model.newTaskModel
+                |> Html.map NewTaskMsg
 
-        , Ui.Button.view
-            (Add model.newTaskModel.value)
-            { disabled = False
-            , readonly = False
-            , kind = "primary"
-            , size = "medium"
-            , text = "Add"
-            }
+            , Ui.Button.view
+                (Add model.newTaskModel.value)
+                { disabled = False
+                , readonly = False
+                , kind = "primary"
+                , size = "medium"
+                , text = "Add"
+                }
+
+            ]
         ]
