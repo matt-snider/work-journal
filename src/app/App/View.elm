@@ -3,6 +3,7 @@ module App.View exposing (view)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Ui.Header
 
 import App.Types exposing (..)
 import TaskList.View
@@ -17,14 +18,24 @@ view model =
             |> Html.map TaskListMsg
     in
         div []
-        [ h1 [] [ text "Work Journal" ]
+        [ Ui.Header.view
+            [ Ui.Header.title
+                { action = Nothing
+                , target = "_self"
+                , link = Nothing
+                , text = "Work Journal"
+                }
+            ]
+
         , taskListView
+
         , input
             [ placeholder "Enter a task"
             , onInput EditNew
             , value model.newTaskDescription
             ]
             []
+
         , button
             [ onClick (Add model.newTaskDescription) ]
             [ text "Add" ]
