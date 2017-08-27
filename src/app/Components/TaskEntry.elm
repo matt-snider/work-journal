@@ -30,6 +30,7 @@ import Utils.Logging as Logging
 type alias Model =
     { id        : Int
     , updating  : Bool
+    , notes     : Array.Array String
     , input     : Ui.InplaceInput.Model
     , checkbox  : Ui.Checkbox.Model
     }
@@ -80,12 +81,20 @@ view model =
             , maybeLoadingIndicator model
             ]
 
-        , Ui.Container.row
-            [ style
-                [ ("margin-left", "25px") ]
-            ]
-            [ ul [] [] ]
+        , notes model
         ]
+
+notes : Model -> Html Msg
+notes model =
+    let
+        listContent =
+            Array.map (\x -> li [] [ text x ]) model.notes
+            |> Array.toList
+    in
+        Ui.Container.row
+            [ style [ ("margin-left", "25px") ] ]
+            [ ul [] listContent ]
+
 
 -- Displays loading indicator when updating
 maybeLoadingIndicator : Model -> Html Msg
@@ -114,6 +123,7 @@ init task =
     in
         { id = task.id
         , updating = False
+        , notes = task.notes
         , input =
             { input | value = task.description }
         , checkbox =
