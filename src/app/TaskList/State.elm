@@ -78,13 +78,13 @@ update msg model =
         -- Child component handlers
         TaskEntryMsg entry msg ->
             let
-                ( updatedEntry, entryCmd ) =
+                ( newEntry, entryCmd ) =
                     TaskEntry.update msg entry
                 newEntries =
-                    model.entries |> replace entry updatedEntry
+                    model.entries |> replace entry newEntry
             in
                 ( { model | entries = newEntries }
-                , Cmd.map (TaskEntryMsg entry) entryCmd
+                , Cmd.map (TaskEntryMsg newEntry) entryCmd
                 )
 
 

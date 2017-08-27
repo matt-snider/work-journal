@@ -20,6 +20,7 @@ import Ui.Helpers.Emitter as Emitter
 import Ui.IconButton
 import Ui.Icons
 import Ui.Input
+import Ui.InplaceInput
 
 
 import App.Api as Api
@@ -31,7 +32,7 @@ import Utils.Logging as Logging
  ---------}
 type alias Model =
     { id        : Int
-    , input     : Ui.Input.Model
+    , input     : Ui.InplaceInput.Model
     , checkbox  : Ui.Checkbox.Model
     , editing   : Bool
     , updating  : Bool
@@ -50,7 +51,7 @@ type Msg
     | OnDelete (Result Http.Error Api.Task)
 
     -- Component msgs
-    | Input    Ui.Input.Msg
+    | Input    Ui.InplaceInput.Msg
     | Checkbox Ui.Checkbox.Msg
 
 
@@ -67,7 +68,9 @@ view model =
                 model.checkbox
                 |> Html.map Checkbox
 
-            , taskInput model
+            , Ui.InplaceInput.view
+                model.input
+                |> Html.map Input
 
             , Ui.IconButton.view
                 Delete
@@ -90,24 +93,6 @@ view model =
             [ ul [] (List.map note []) ]
         ]
 
-
--- Task is only an input when isEditing = True
--- which can be toggled by clicking
-taskInput : Model -> Html Msg
-taskInput model =
-    if model.editing then
-        span [ onEnter False StopEdit ]
-            [ Ui.Input.view
-                model.input
-                |> Html.map Input
-            ]
-    else
-        span []
-            [ span
-                [ onClick StartEdit ]
-                [ text model.input.value ]
-            ]
-
 -- Notes are just li's
 note : Api.Note -> Html Msg
 note n = li [] [ text n.content ]
@@ -126,11 +111,18 @@ maybeLoadingIndicator model =
 {---------
  - STATE -
  ---------}
+
+
 init : Api.Task -> Model
 init task =
     let
-        input = Ui.Input.init ()
-        checkbox = Ui.Checkbox.init ()
+        input =
+            Ui.InplaceInput.init ()
+                |> Ui.InplaceInput.required True
+                |> Ui.InplaceInput.ctrlSave True
+
+        checkbox =
+            Ui.Checkbox.init ()
     in
         { id = task.id
         , editing  = False
@@ -144,7 +136,7 @@ init task =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ui.Input.onChange Change model.input
+        [ Ui.InplaceInput.onChange Change model.input
         , Ui.Checkbox.onChange Toggle model.checkbox
         ]
 
@@ -177,24 +169,12 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         -- Main state handlers
-        StartEdit ->
-            ( { model | editing = True } , Cmd.none )
-
-
-        StopEdit ->
+        Change value ->
             ( { model
               | editing = False
               , updating = True
               }
             , Api.updateTask OnSave (toTask model)
-            )
-
-        Delete ->
-            ( { model | updating = True }
-            , Cmd.batch
-                [ Api.deleteTask OnDelete (toTask model)
-                , Emitter.sendInt (deleteChannel model) model.id
-                ]
             )
 
         Toggle value ->
@@ -206,14 +186,13 @@ update msg model =
                 , Api.updateTask OnSave (toTask model)
                 )
 
-        Change value ->
-            let
-                ( input, inputCmd ) =
-                    Ui.Input.setValue value model.input
-            in
-                ( { model | input = input }
-                , Cmd.map Input inputCmd
-                )
+        Delete ->
+            ( { model | updating = True }
+            , Cmd.batch
+                [ Api.deleteTask OnDelete (toTask model)
+                , Emitter.sendInt (deleteChannel model) model.id
+                ]
+            )
 
         -- Http handlers
         OnSave (Ok task) ->
@@ -233,10 +212,10 @@ update msg model =
         -- Child component handlers
         Input msg ->
             let
-                ( updatedInput, inputCmd ) =
-                    Ui.Input.update msg model.input
+                ( newInput, inputCmd ) =
+                    Ui.InplaceInput.update msg model.input
             in
-                ( { model | input = updatedInput }
+                ( { model | input = newInput }
                 , Cmd.map Input inputCmd
                 )
 
