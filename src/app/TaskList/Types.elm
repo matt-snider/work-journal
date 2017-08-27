@@ -27,6 +27,9 @@ type alias Model =
 
 type Msg
     = New String
+    | Delete Int
+
+    -- Http msgs
     | OnCreate (Result Http.Error Api.Task)
     | OnLoad   (Result Http.Error (Array.Array Api.Task))
 

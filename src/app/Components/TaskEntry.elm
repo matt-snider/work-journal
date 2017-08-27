@@ -3,6 +3,7 @@ module TaskEntry exposing
     , Msg
     , init
     , subscriptions
+    , onDelete
     , update
     , view
     )
@@ -12,11 +13,13 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
+import Ui.Container
+import Ui.Checkbox
+import Ui.Helpers.Emitter as Emitter
 import Ui.IconButton
 import Ui.Icons
 import Ui.Input
-import Ui.Container
-import Ui.Checkbox
+
 
 import App.Api as Api
 import Utils.Events exposing (onEnter)
@@ -145,6 +148,15 @@ subscriptions model =
         , Ui.Checkbox.onChange Toggle model.checkbox
         ]
 
+deleteChannel : Model -> String
+deleteChannel model =
+        "deleteChannel" ++ toString(model.id)
+
+onDelete : (Int -> msg) -> Model -> Sub msg
+onDelete msg model =
+    Emitter.listenInt
+        (deleteChannel model) msg
+
 setCompleted : Bool -> Model -> Model
 setCompleted value model =
     let
@@ -179,7 +191,10 @@ update msg model =
 
         Delete ->
             ( { model | updating = True }
-            , Api.deleteTask OnDelete (toTask model)
+            , Cmd.batch
+                [ Api.deleteTask OnDelete (toTask model)
+                , Emitter.sendInt (deleteChannel model) model.id
+                ]
             )
 
         Toggle value ->

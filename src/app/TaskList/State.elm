@@ -21,18 +21,25 @@ init =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
-        toSubMsg entry =
+        toBasicSub entry =
             Sub.map
                 (TaskEntryMsg entry)
                 (TaskEntry.subscriptions entry)
 
-        entrySubs =
-            (Array.map toSubMsg model.entries)
+        basicSubs =
+            (Array.map toBasicSub model.entries)
+                |> Array.toList
+                |> Sub.batch
+
+        onDeleteSubs =
+            (Array.map (TaskEntry.onDelete Delete) model.entries)
                 |> Array.toList
                 |> Sub.batch
     in
         Sub.batch
-            [ entrySubs ]
+            [ basicSubs
+            , onDeleteSubs
+            ]
 
 
 -- Update
@@ -42,6 +49,11 @@ update msg model =
         New description ->
             ( model
             , Api.createTask OnCreate description
+            )
+
+        Delete id ->
+            ( { model | entries = removeById id model.entries }
+            , Cmd.none
             )
 
         -- Http handlers
@@ -103,3 +115,7 @@ replace old new arr =
                 x
     in
         Array.map maybeReplace arr
+
+removeById : Int -> Array.Array TaskEntry.Model -> Array.Array TaskEntry.Model
+removeById id arr =
+    Array.filter (\x -> x.id /= id) arr
