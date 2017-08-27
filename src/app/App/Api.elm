@@ -20,7 +20,7 @@ type alias Task =
     { id          : Int
     , description : String
     , completed   : Bool
-    , notes       : Array.Array Note
+    , notes       : Array.Array String
     }
 
 type alias Note =
@@ -111,7 +111,7 @@ taskDecoder = Decode.map4 Task
     (Decode.at ["id"] Decode.int)
     (Decode.at ["description"] Decode.string)
     (Decode.at ["is_complete"] Decode.bool)
-    (Decode.at ["notes"] (Decode.array noteDecoder))
+    (Decode.at ["notes"] (Decode.array Decode.string))
 
 -- Encode task
 taskEncoder : Task -> Encode.Value
@@ -120,7 +120,7 @@ taskEncoder task =
         [ ("id", Encode.int task.id)
         , ("description", (Encode.string task.description))
         , ("is_complete", (Encode.bool task.completed))
-        , ("notes", (Encode.array (Array.map noteEncoder task.notes)))
+        , ("notes", (Encode.array (Array.map Encode.string task.notes)))
         ]
 
 -- Encode a new task (just the description)
@@ -130,19 +130,4 @@ newTaskEncoder description =
         [ ("description", (Encode.string description))
         , ("is_complete", (Encode.bool False))
         , ("notes", (Encode.array Array.empty))
-        ]
-
-
--- Decode single note
-noteDecoder : Decode.Decoder Note
-noteDecoder = Decode.map2 Note
-    (Decode.at ["id"] Decode.int)
-    (Decode.at ["content"] Decode.string)
-
--- Encode single note
-noteEncoder : Note -> Encode.Value
-noteEncoder note =
-    Encode.object
-        [ ("id", Encode.int note.id)
-        , ("content", (Encode.string note.content))
         ]
