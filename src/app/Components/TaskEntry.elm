@@ -84,12 +84,8 @@ view model =
             [ style
                 [ ("margin-left", "25px") ]
             ]
-            [ ul [] (List.map note []) ]
+            [ ul [] [] ]
         ]
-
--- Notes are just li's
-note : Api.Note -> Html Msg
-note n = li [] [ text n.content ]
 
 -- Displays loading indicator when updating
 maybeLoadingIndicator : Model -> Html Msg
@@ -105,8 +101,6 @@ maybeLoadingIndicator model =
 {---------
  - STATE -
  ---------}
-
-
 init : Api.Task -> Model
 init task =
     let

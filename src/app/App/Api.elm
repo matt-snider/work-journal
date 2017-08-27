@@ -1,6 +1,5 @@
 module App.Api exposing
-    ( Note
-    , Task
+    ( Task
     , getTasks
     , createTask
     , updateTask
@@ -21,11 +20,6 @@ type alias Task =
     , description : String
     , completed   : Bool
     , notes       : Array.Array String
-    }
-
-type alias Note =
-    { id       : Int
-    , content  : String
     }
 
 
