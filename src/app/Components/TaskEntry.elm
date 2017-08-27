@@ -11,15 +11,12 @@ module TaskEntry exposing
 import Array
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
-import Html.Events.Extra exposing (onEnter)
 import Http
 import Ui.Container
 import Ui.Checkbox
 import Ui.Helpers.Emitter as Emitter
 import Ui.IconButton
 import Ui.Icons
-import Ui.Input
 import Ui.InplaceInput
 
 
@@ -32,17 +29,14 @@ import Utils.Logging as Logging
  ---------}
 type alias Model =
     { id        : Int
+    , updating  : Bool
     , input     : Ui.InplaceInput.Model
     , checkbox  : Ui.Checkbox.Model
-    , editing   : Bool
-    , updating  : Bool
     }
 
 type Msg
     -- Basic msgs
-    = StartEdit
-    | StopEdit
-    | Delete
+    = Delete
     | Change String
     | Toggle Bool
 
@@ -125,7 +119,6 @@ init task =
             Ui.Checkbox.init ()
     in
         { id = task.id
-        , editing  = False
         , updating = False
         , input =
             { input | value = task.description }
@@ -170,10 +163,7 @@ update msg model =
     case msg of
         -- Main state handlers
         Change value ->
-            ( { model
-              | editing = False
-              , updating = True
-              }
+            ( { model | updating = True }
             , Api.updateTask OnSave (toTask model)
             )
 
