@@ -1,7 +1,6 @@
 module App.State exposing (init, update, subscriptions)
 
 import Array
-import Debug
 import Ui.Input
 
 import TaskList.State
@@ -70,7 +69,8 @@ update msg model =
 
     EditNew description ->
         let
-            (newTaskModel, _) = Ui.Input.setValue description model.newTaskModel
+            (newTaskModel, _) =
+                Ui.Input.setValue description model.newTaskModel
         in
             ( { model | newTaskModel = newTaskModel }
             , Cmd.none
@@ -79,7 +79,7 @@ update msg model =
     TaskListMsg taskListMsg ->
         let
             ( newTaskListModel, command ) =
-                TaskList.State.update (Debug.log "taskListMsg" taskListMsg) model.taskListModel
+                TaskList.State.update taskListMsg model.taskListModel
         in
             ( { model | taskListModel = newTaskListModel }
             , Cmd.map TaskListMsg command
@@ -88,7 +88,7 @@ update msg model =
     NewTaskMsg newTaskMsg ->
         let
             (newTaskModel, cmd) =
-                Ui.Input.update (Debug.log "newTaskMsg" newTaskMsg) model.newTaskModel
+                Ui.Input.update newTaskMsg model.newTaskModel
         in
             ( { model | newTaskModel = newTaskModel }
             , Cmd.map NewTaskMsg cmd

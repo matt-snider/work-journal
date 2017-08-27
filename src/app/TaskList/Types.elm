@@ -3,12 +3,14 @@ module TaskList.Types exposing (..)
 import Array
 import Http
 
+import App.Api as Api
 import TaskEntry
 
 
 -- TaskList model
 type alias Model =
-    { tasks : Array.Array TaskEntry.Model }
+    { entries : Array.Array TaskEntry.Model
+    }
 
 
 -- Create new tasks with convenient defaults
@@ -23,11 +25,10 @@ type alias Model =
 --     }
 
 
--- TaskList specific messages
 type Msg
     = New String
-    -- Http msgs
-    -- | OnAdd  (Result Error Task)
-    -- | OnSave  (Result Error Task)
-    -- | OnDelete  (Result Error Task)
-    | OnLoad (Result Http.Error (Array.Array TaskEntry.Task))
+    | OnCreate (Result Http.Error Api.Task)
+    | OnLoad   (Result Http.Error (Array.Array Api.Task))
+
+    -- Component msgs
+    | TaskEntryMsg TaskEntry.Model TaskEntry.Msg

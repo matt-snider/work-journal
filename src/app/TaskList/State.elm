@@ -1,109 +1,106 @@
 module TaskList.State exposing (init, subscriptions, update)
 
-import Array exposing (Array)
+import Array
+import Http
 
+import App.Api as Api
+import TaskEntry
 import TaskList.Types exposing (..)
-import TaskList.Api as Api
+import Utils.Logging as Logging
 
 
 -- Init
 init : (Model, Cmd Msg)
-init = (Array.empty, Api.getTasks)
+init =
+    ( { entries = Array.empty }
+    , Api.getTasks OnLoad
+    )
 
 
 -- Subs
 subscriptions : Model -> Sub Msg
-subscriptions = (\x -> Sub.none)
+subscriptions model =
+    let
+        toSubMsg entry =
+            Sub.map
+                (TaskEntryMsg entry)
+                (TaskEntry.subscriptions entry)
+
+        entrySubs =
+            (Array.map toSubMsg model.entries)
+                |> Array.toList
+                |> Sub.batch
+    in
+        Sub.batch
+            [ entrySubs ]
 
 
 -- Update
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
-  case msg of
-    New description ->
-        ( model
-        , Api.saveTask (newTask description)
-        )
+    case msg of
+        New description ->
+            ( model
+            , Api.createTask OnCreate description
+            )
 
---     StartEdit task ->
---         ( replace model { task | isEditing = True }
---         , Cmd.none
---         )
+        -- Http handlers
+        OnLoad (Ok tasks) ->
+            ( model
+                |> setTasks tasks
+            , Cmd.none
+            )
 
---     DoneEdit task description ->
---         -- DoneEdit is thrown multiple times due to
---         -- onEnter and onBlur event listeners
---         -- This acts as debouncing of sorts
---         case task.isUpdating of
---             False ->
---                 ( replace model { task | isUpdating = True }
---                 , Api.saveTask { task | description = description }
---                 )
---             True ->
---                 ( model
---                 , Cmd.none
---                 )
+        OnLoad (Err err) ->
+            ( model, Logging.error err Cmd.none )
 
---     Delete task ->
---         ( replace model { task | isUpdating = True }
---         , Api.deleteTask task
---         )
+        OnCreate (Ok task) ->
+            ( model
+                |> addTask task
+            , Cmd.none
+            )
 
---     ToggleComplete task isComplete ->
---         ( replace model { task | isUpdating = True }
---         , Api.saveTask { task | isComplete = True }
---         )
+        OnCreate (Err err) ->
+            ( model, Logging.error err Cmd.none )
 
---     -- Sub handlers
--- :   TaskInput x ->
---         (model, Cmd.none)
+        -- Child component handlers
+        TaskEntryMsg entry msg ->
+            let
+                -- TODO: probably need to merge this into model?
+                ( updatedEntry, entryCmd ) =
+                    TaskEntry.update msg entry
+                newEntries =
+                    model.entries |> replace entry updatedEntry
+            in
+                ( { model | entries = newEntries }
+                , Cmd.map (TaskEntryMsg entry) entryCmd
+                )
 
---     TaskCheckbox x ->
---         (model, Cmd.none)
-
-    -- Command handlers
-    OnAdd (Ok task) ->
-        ( Array.push task model
-        , Cmd.none
-        )
-
-    -- OnSave (Ok task) ->
-    --     ( replace model task
-    --     , Cmd.none
-    --     )
-
-    -- OnDelete (Ok task) ->
-    --     ( Array.filter (\x -> x.id /= task.id) model
-    --     , Cmd.none
-    --     )
-
-    OnLoad (Ok tasks) ->
-        ( tasks
-        , Cmd.none
-        )
-
-    -- Error handlers
-    OnAdd (Err err) ->
-        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
-
-    -- OnLoad (Err err) ->
-    --     (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
-
-    -- OnSave (Err err) ->
-    --     (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
-
-    OnDelete (Err err) ->
-        (model, Debug.log ("Error: " ++ toString (err)) Cmd.none)
 
 
 -- Utils
-replace : Array Task -> Task -> Array Task
-replace arr obj =
+
+
+setTasks : Array.Array Api.Task -> Model -> Model
+setTasks tasks model =
+    { model | entries = Array.map TaskEntry.init tasks }
+
+
+addTask : Api.Task -> Model -> Model
+addTask task model =
     let
-        maybeMerge x =
-            if obj.id == x.id then
-                obj
+        newEntry = TaskEntry.init task
+    in
+        { model | entries = Array.push newEntry model.entries }
+
+
+replace : a -> a -> Array.Array a -> Array.Array a
+replace old new arr =
+    let
+        maybeReplace x =
+            if x == old then
+                new
             else
                 x
     in
-        Array.map maybeMerge arr
+        Array.map maybeReplace arr
