@@ -19,7 +19,7 @@ import Ui.Container
 import Ui.Checkbox
 
 import App.Api as Api
-import Utils.Events exposing (onInputEnter)
+import Utils.Events exposing (onEnter)
 import Utils.Logging as Logging
 
 
@@ -27,7 +27,7 @@ import Utils.Logging as Logging
  - TYPES -
  ---------}
 type alias Model =
-    { task      : Api.Task
+    { id        : Int
     , input     : Ui.Input.Model
     , checkbox  : Ui.Checkbox.Model
     , editing   : Bool
@@ -84,7 +84,7 @@ view model =
             [ style
                 [ ("margin-left", "25px") ]
             ]
-            [ ul [] (List.map note (Array.toList model.task.notes)) ]
+            [ ul [] (List.map note []) ]
         ]
 
 
@@ -93,7 +93,7 @@ view model =
 taskInput : Model -> Html Msg
 taskInput model =
     if model.editing then
-        span [ ]
+        span [ onEnter StopEdit ]
             [ Ui.Input.view
                 model.input
                 |> Html.map Input
@@ -102,7 +102,7 @@ taskInput model =
         span []
             [ span
                 [ onClick StartEdit ]
-                [ text model.task.description ]
+                [ text model.input.value ]
             ]
 
 -- Notes are just li's
@@ -129,7 +129,7 @@ init task =
         input = Ui.Input.init ()
         checkbox = Ui.Checkbox.init ()
     in
-        { task = task
+        { id = task.id
         , editing  = False
         , updating = False
         , input =
@@ -145,40 +145,50 @@ subscriptions model =
         , Ui.Checkbox.onChange Toggle model.checkbox
         ]
 
+setCompleted : Bool -> Model -> Model
+setCompleted value model =
+    let
+        checkbox = model.checkbox
+        newCheckbox = { checkbox | value = value}
+    in
+        { model | checkbox = newCheckbox }
 
-setCompleted : Bool -> Api.Task -> Api.Task
-setCompleted value task =
-    { task | completed = value }
-
+toTask : Model -> Api.Task
+toTask model =
+    { id = model.id
+    , description = model.input.value
+    , completed   = model.checkbox.value
+    , notes       = Array.empty
+    }
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         -- Main state handlers
         StartEdit ->
-            Debug.log "TaskEntry.StartEdit"
             ( { model | editing = True } , Cmd.none )
 
 
         StopEdit ->
-            Debug.log "TaskEntry.StopEdit"
-            ( { model | editing = False } , Cmd.none )
+            ( { model
+              | editing = False
+              , updating = True
+              }
+            , Api.updateTask OnSave (toTask model)
+            )
 
         Delete ->
-            Debug.log "TaskEntry.Delete"
             ( { model | updating = True }
-            , Api.deleteTask OnDelete model.task
+            , Api.deleteTask OnDelete (toTask model)
             )
 
         Toggle value ->
             let
-                task =
-                    model.task
-                    |> setCompleted (Debug.log "toggle value" value)
+                newModel =
+                    model |> setCompleted value
             in
-                Debug.log "TaskEntry.Toggle"
                 ( { model | updating = True }
-                , Api.updateTask OnSave task
+                , Api.updateTask OnSave (toTask model)
                 )
 
         Change value ->
@@ -186,19 +196,16 @@ update msg model =
                 ( input, inputCmd ) =
                     Ui.Input.setValue value model.input
             in
-                Debug.log "TaskEntry.Change"
                 ( { model | input = input }
                 , Cmd.map Input inputCmd
                 )
 
         -- Http handlers
         OnSave (Ok task) ->
-            ( { model
-              | updating = False
-              , task = task
-              }
-            , Cmd.none
-            )
+            let
+                newModel = init task
+            in
+                ( newModel, Cmd.none )
 
         OnSave (Err err) ->
             ( model, Logging.error err Cmd.none )
@@ -214,7 +221,6 @@ update msg model =
                 ( updatedInput, inputCmd ) =
                     Ui.Input.update msg model.input
             in
-                Debug.log "TaskEntry.Input"
                 ( { model | input = updatedInput }
                 , Cmd.map Input inputCmd
                 )
@@ -224,7 +230,6 @@ update msg model =
                 ( updatedCheckbox, checkboxCmd ) =
                     Ui.Checkbox.update msg model.checkbox
             in
-                Debug.log "TaskEntry.Checkbox"
                 ( { model | checkbox = updatedCheckbox }
                 , Cmd.map Checkbox checkboxCmd
                 )

@@ -66,7 +66,6 @@ update msg model =
         -- Child component handlers
         TaskEntryMsg entry msg ->
             let
-                -- TODO: probably need to merge this into model?
                 ( updatedEntry, entryCmd ) =
                     TaskEntry.update msg entry
                 newEntries =
@@ -94,11 +93,11 @@ addTask task model =
         { model | entries = Array.push newEntry model.entries }
 
 
-replace : a -> a -> Array.Array a -> Array.Array a
+replace : TaskEntry.Model -> TaskEntry.Model -> Array.Array TaskEntry.Model  -> Array.Array TaskEntry.Model
 replace old new arr =
     let
         maybeReplace x =
-            if x == old then
+            if x.id == old.id then
                 new
             else
                 x
