@@ -12,6 +12,7 @@ import Array
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Html.Events.Extra exposing (onEnter)
 import Http
 import Ui.Container
 import Ui.Checkbox
@@ -22,7 +23,6 @@ import Ui.Input
 
 
 import App.Api as Api
-import Utils.Events exposing (onEnter)
 import Utils.Logging as Logging
 
 
@@ -96,7 +96,7 @@ view model =
 taskInput : Model -> Html Msg
 taskInput model =
     if model.editing then
-        span [ onEnter StopEdit ]
+        span [ onEnter False StopEdit ]
             [ Ui.Input.view
                 model.input
                 |> Html.map Input
