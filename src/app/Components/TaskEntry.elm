@@ -80,21 +80,7 @@ view model =
 
             , maybeLoadingIndicator model
             ]
-
-        , notes model
         ]
-
-notes : Model -> Html Msg
-notes model =
-    let
-        listContent =
-            Array.map (\x -> li [] [ text x ]) model.notes
-            |> Array.toList
-    in
-        Ui.Container.row
-            [ style [ ("margin-left", "25px") ] ]
-            [ ul [] listContent ]
-
 
 -- Displays loading indicator when updating
 maybeLoadingIndicator : Model -> Html Msg
@@ -120,12 +106,19 @@ init task =
 
         checkbox =
             Ui.Checkbox.init ()
+
+        textContent =
+            task.description
+                ++ Array.foldl
+                    (\x y -> "\n- " ++ x ++ y)
+                    ""
+                    task.notes
     in
         { id = task.id
         , updating = False
         , notes = task.notes
         , input =
-            { input | value = task.description }
+            { input | value = textContent }
         , checkbox =
             { checkbox | value = task.completed }
         }
