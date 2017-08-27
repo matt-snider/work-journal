@@ -12,12 +12,10 @@ GRANT select, insert, update, delete
 
 GRANT select, insert, update, delete
     ON models.tasks
-     , models.notes
     TO api_user;
 
 GRANT usage
     ON models.tasks_id_seq
-     , models.notes_id_seq
     TO api_user;
 
 
