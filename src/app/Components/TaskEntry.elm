@@ -147,13 +147,34 @@ setCompleted value model =
     in
         { model | checkbox = newCheckbox }
 
+
 toTask : Model -> Api.Task
 toTask model =
-    { id = model.id
-    , description = model.input.value
-    , completed   = model.checkbox.value
-    , notes       = Array.empty
-    }
+    let
+        clean s =
+            case String.uncons s of
+                Just ('-', ss) -> clean ss
+                Just _ -> String.trim s
+                Nothing -> ""
+
+        parts =
+            String.split "\n" model.input.value
+                |> List.map clean
+                |> List.filter (not << String.isEmpty)
+
+        description =
+            case List.head parts of
+                Just d  -> d
+                Nothing -> Debug.crash "TODO: handler errors in toTask"
+
+        notes =
+            List.drop 1 parts
+    in
+        { id = model.id
+        , description = description
+        , completed   = model.checkbox.value
+        , notes       = Array.fromList notes
+        }
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
