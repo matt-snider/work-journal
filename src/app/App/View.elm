@@ -2,14 +2,13 @@ module App.View exposing (view)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (..)
 import Ui.Header
 import Ui.Button
 import Ui.Input
 import Ui.Container
 
 import App.Types exposing (..)
-import TaskList.View
+import TaskList
 
 
 -- TODO: Add should happen onInputBlur or enter
@@ -28,7 +27,7 @@ view model =
 
         , Ui.Container.column
             [ contentStyle ]
-            [ TaskList.View.view model.taskListModel
+            [ TaskList.view model.taskListModel
                 |> Html.map TaskListMsg
 
             , Ui.Container.row

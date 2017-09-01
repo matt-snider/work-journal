@@ -1,13 +1,14 @@
 module App.Types exposing (..)
 
-import TaskList.Types
 import Ui.Input
+
+import TaskList
 
 
 -- App model
 type alias Model =
-    { taskListModel      : TaskList.Types.Model
-    , newTaskModel       : Ui.Input.Model
+    { taskListModel  : TaskList.Model
+    , newTaskModel   : Ui.Input.Model
     }
 
 
@@ -15,5 +16,5 @@ type alias Model =
 type Msg
     = Add String
     | EditNew String
-    | TaskListMsg TaskList.Types.Msg
+    | TaskListMsg TaskList.Msg
     | NewTaskMsg Ui.Input.Msg

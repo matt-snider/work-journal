@@ -3,9 +3,8 @@ module App.State exposing (init, update, subscriptions)
 import Array
 import Ui.Input
 
-import TaskList.State
-import TaskList.Types
 import App.Types exposing (..)
+import TaskList
 
 
 -- Init
@@ -13,7 +12,7 @@ init : (Model, Cmd Msg)
 init =
     let
         ( taskListModel, taskListCmd ) =
-            TaskList.State.init
+            TaskList.init
 
         newTaskModel =
             Ui.Input.init ()
@@ -33,7 +32,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     let
         taskListSub =
-            TaskList.State.subscriptions model.taskListModel
+            TaskList.subscriptions model.taskListModel
     in
         Sub.batch
             [ Sub.map TaskListMsg taskListSub
@@ -52,8 +51,8 @@ update msg model =
                 Ui.Input.setValue "" model.newTaskModel
 
             ( taskListModel, taskListCmd ) =
-                TaskList.State.update
-                    (TaskList.Types.New model.newTaskModel.value)
+                TaskList.update
+                    (TaskList.New model.newTaskModel.value)
                     model.taskListModel
         in
             ( { model
@@ -79,7 +78,7 @@ update msg model =
     TaskListMsg taskListMsg ->
         let
             ( newTaskListModel, command ) =
-                TaskList.State.update taskListMsg model.taskListModel
+                TaskList.update taskListMsg model.taskListModel
         in
             ( { model | taskListModel = newTaskListModel }
             , Cmd.map TaskListMsg command

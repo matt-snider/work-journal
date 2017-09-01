@@ -1,15 +1,58 @@
-module TaskList.State exposing (init, subscriptions, update)
+module TaskList exposing
+    ( Model
+    , Msg (New)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Array
+import Html exposing (..)
 import Http
 
 import App.Api as Api
 import TaskEntry
-import TaskList.Types exposing (..)
 import Utils.Logging as Logging
 
 
--- Init
+{---------
+ - TYPES -
+ ---------}
+type alias Model =
+    { entries : Array.Array TaskEntry.Model }
+
+
+type Msg
+    = New String
+    | Delete Int
+
+    -- Http msgs
+    | OnCreate (Result Http.Error Api.Task)
+    | OnLoad   (Result Http.Error (Array.Array Api.Task))
+
+    -- Component msgs
+    | TaskEntryMsg TaskEntry.Model TaskEntry.Msg
+
+
+{--------
+ - VIEW -
+ --------}
+view : Model -> Html Msg
+view model =
+    let
+        taskLi entry =
+            TaskEntry.view entry
+                |> Html.map (TaskEntryMsg entry)
+        tasks =
+            Array.map taskLi model.entries
+    in
+        div [] [ ul [] (Array.toList tasks) ]
+
+
+{---------
+ - STATE -
+ ---------}
 init : (Model, Cmd Msg)
 init =
     ( { entries = Array.empty }
@@ -17,7 +60,6 @@ init =
     )
 
 
--- Subs
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
@@ -42,7 +84,6 @@ subscriptions model =
             ]
 
 
--- Update
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
@@ -75,6 +116,7 @@ update msg model =
         OnCreate (Err err) ->
             ( model, Logging.error err Cmd.none )
 
+
         -- Child component handlers
         TaskEntryMsg entry msg ->
             let
@@ -88,10 +130,7 @@ update msg model =
                 )
 
 
-
 -- Utils
-
-
 setTasks : Array.Array Api.Task -> Model -> Model
 setTasks tasks model =
     { model | entries = Array.map TaskEntry.init tasks }
@@ -115,6 +154,7 @@ replace old new arr =
                 x
     in
         Array.map maybeReplace arr
+
 
 removeById : Int -> Array.Array TaskEntry.Model -> Array.Array TaskEntry.Model
 removeById id arr =
