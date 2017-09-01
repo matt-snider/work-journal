@@ -109,7 +109,7 @@ init task =
 
         textContent =
             task.description
-                ++ Array.foldl
+                ++ Array.foldr
                     (\x y -> "\n- " ++ x ++ y)
                     ""
                     task.notes
