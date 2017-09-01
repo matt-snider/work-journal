@@ -23,9 +23,17 @@ CREATE FUNCTION save_task()
             RAISE EXCEPTION 'Expected notes to be an array of strings';
         END IF;
 
-        -- Insert record and return
-        INSERT INTO models.tasks (description, is_complete, notes)
-            VALUES (new.description, new.is_complete, new.notes);
+        -- Update if it doesn't exist, otherwise insert
+        IF new.id IS NOT NULL THEN
+            UPDATE models.tasks
+               SET description = new.description,
+                   is_complete = new.is_complete,
+                   notes = new.notes
+            WHERE  id = new.id;
+        ELSE
+            INSERT INTO models.tasks (description, is_complete, notes)
+                VALUES (new.description, new.is_complete, new.notes);
+        END IF;
         RETURN new;
     END;
     $$ LANGUAGE plpgsql;
