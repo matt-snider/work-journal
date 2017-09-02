@@ -1,10 +1,12 @@
 module App.State exposing (init, update, subscriptions)
 
-import Array
 import Ui.Input
 
 import App.Types exposing (..)
+import App.Api as Api
 import TaskList
+
+import Utils.Logging as Logging
 
 
 -- Init
@@ -49,22 +51,28 @@ update msg model =
         let
             ( newTaskModel, newTaskCmd ) =
                 Ui.Input.setValue "" model.newTaskModel
-
-            ( taskListModel, taskListCmd ) =
-                TaskList.update
-                    (TaskList.New model.newTaskModel.value)
-                    model.taskListModel
         in
             ( { model
               | newTaskModel  = newTaskModel
-              , taskListModel = taskListModel
               }
 
             , Cmd.batch
                 [ Cmd.map NewTaskMsg newTaskCmd
-                , Cmd.map TaskListMsg taskListCmd
+                , Api.createTask OnCreate description
                 ]
             )
+
+    OnCreate (Ok task) ->
+        let
+            newTaskListModel =
+                TaskList.addTask task model.taskListModel
+        in
+            ( { model | taskListModel = newTaskListModel }
+            , Cmd.none
+            )
+
+    OnCreate (Err err) ->
+        ( model, Logging.error err Cmd.none )
 
     EditNew description ->
         let

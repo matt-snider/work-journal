@@ -1,10 +1,11 @@
 module TaskList exposing
     ( Model
-    , Msg (New)
+    , Msg
     , init
     , subscriptions
     , update
     , view
+    , addTask
     )
 
 import Array
@@ -24,11 +25,9 @@ type alias Model =
 
 
 type Msg
-    = New String
-    | Delete Int
+    = Delete Int
 
     -- Http msgs
-    | OnCreate (Result Http.Error Api.Task)
     | OnLoad   (Result Http.Error (Array.Array Api.Task))
 
     -- Component msgs
@@ -87,11 +86,6 @@ subscriptions model =
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
-        New description ->
-            ( model
-            , Api.createTask OnCreate description
-            )
-
         Delete id ->
             ( { model | entries = removeById id model.entries }
             , Cmd.none
@@ -107,16 +101,6 @@ update msg model =
         OnLoad (Err err) ->
             ( model, Logging.error err Cmd.none )
 
-        OnCreate (Ok task) ->
-            ( model
-                |> addTask task
-            , Cmd.none
-            )
-
-        OnCreate (Err err) ->
-            ( model, Logging.error err Cmd.none )
-
-
         -- Child component handlers
         TaskEntryMsg entry msg ->
             let
@@ -130,7 +114,6 @@ update msg model =
                 )
 
 
--- Utils
 setTasks : Array.Array Api.Task -> Model -> Model
 setTasks tasks model =
     { model | entries = Array.map TaskEntry.init tasks }
