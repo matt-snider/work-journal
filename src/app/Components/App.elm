@@ -40,6 +40,7 @@ type Msg
     = Add String
     | EditNew String
     | DateChanged Time.Time
+    | Today
 
     -- Http msgs
     | OnCreate (Result Http.Error Api.Task)
@@ -71,6 +72,10 @@ view model =
             [ div []
                 [ Ui.DatePicker.view "en_us" model.calendarModel
                     |> Html.map DatePickerMsg
+
+                , Ui.Button.view
+                    Today
+                    (Ui.Button.model "Today" "warning" "medium")
                 ]
 
             , TaskList.view model.taskListModel
@@ -177,6 +182,24 @@ update msg model =
             ( { model | taskListModel = newListModel }
             , Cmd.map TaskListMsg listCmd
             )
+
+    Today ->
+        let
+            today =  ExtDate.now ()
+
+            newCalendarModel =
+                Ui.DatePicker.setValue today model.calendarModel
+
+            ( newTaskListModel, taskListCmd ) =
+                TaskList.init today
+        in
+            ( { model
+              | taskListModel = newTaskListModel
+              , calendarModel = newCalendarModel
+              }
+            , Cmd.map TaskListMsg taskListCmd
+            )
+
 
     OnCreate (Ok task) ->
         let
