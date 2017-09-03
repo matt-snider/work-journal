@@ -29,12 +29,13 @@ CREATE FUNCTION save_task()
             UPDATE models.tasks
                SET description = new.description,
                    is_complete = new.is_complete,
+                   day = new.day,
                    notes = new.notes
             WHERE id = new.id;
             new_id = new.id;
         ELSE
-            INSERT INTO models.tasks (description, is_complete, notes)
-                VALUES (new.description, new.is_complete, new.notes)
+            INSERT INTO models.tasks (description, is_complete, notes, day)
+                VALUES (new.description, new.is_complete, new.notes, new.day)
                 RETURNING id INTO new_id;
         END IF;
         SELECT * INTO result FROM api.tasks WHERE id = new_id;
