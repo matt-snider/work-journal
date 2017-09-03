@@ -19,6 +19,7 @@ import TaskList
 import TaskInput
 import Utils.Api as Api
 import Utils.Logging as Logging
+import Utils.Style as Style
 
 
 {---------
@@ -65,9 +66,11 @@ view model =
 
             , Ui.Container.row
                 []
-                [ TaskInput.view
-                    model.newTaskModel
-                    |> Html.map NewTaskMsg
+                [ div [ Style.flex "70" ]
+                    [ TaskInput.view
+                        model.newTaskModel
+                        |> Html.map NewTaskMsg
+                    ]
 
                 , Ui.Button.view
                     (Add (TaskInput.getValue model.newTaskModel))

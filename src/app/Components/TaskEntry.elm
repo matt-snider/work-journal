@@ -22,6 +22,7 @@ import Ui.Icons
 import TaskInput
 import Utils.Api as Api
 import Utils.Logging as Logging
+import Utils.Style as Style
 
 
 {---------
@@ -56,9 +57,6 @@ type Msg
 view : Model -> Html Msg
 view model =
     let
-        flex x =
-            style [ ("flex", x) ]
-
         containerStyle =
             style [ ("margin-bottom", "15px") ]
     in
@@ -72,13 +70,13 @@ view model =
                     |> Html.map Checkbox
                 ]
 
-            , div [ flex "80" ]
+            , div [ Style.flex "80" ]
                 [ TaskInput.view
                     model.input
                     |> Html.map Input
                 ]
 
-            , div [ flex "10" ]
+            , div [ Style.flex "10" ]
                 [ Ui.IconButton.view
                     Delete
                     { glyph = Ui.Icons.close []
