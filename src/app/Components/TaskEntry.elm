@@ -17,9 +17,9 @@ import Ui.Checkbox
 import Ui.Helpers.Emitter as Emitter
 import Ui.IconButton
 import Ui.Icons
-import Ui.InplaceInput
 
 
+import TaskInput
 import Utils.Api as Api
 import Utils.Logging as Logging
 
@@ -31,7 +31,7 @@ type alias Model =
     { id        : Int
     , updating  : Bool
     , notes     : Array.Array String
-    , input     : Ui.InplaceInput.Model
+    , input     : TaskInput.Model
     , checkbox  : Ui.Checkbox.Model
     }
 
@@ -46,7 +46,7 @@ type Msg
     | OnDelete (Result Http.Error Api.Task)
 
     -- Component msgs
-    | Input    Ui.InplaceInput.Msg
+    | Input    TaskInput.Msg
     | Checkbox Ui.Checkbox.Msg
 
 
@@ -63,7 +63,7 @@ view model =
                 model.checkbox
                 |> Html.map Checkbox
 
-            , Ui.InplaceInput.view
+            , TaskInput.view
                 model.input
                 |> Html.map Input
 
@@ -99,34 +99,34 @@ maybeLoadingIndicator model =
 init : Api.Task -> Model
 init task =
     let
-        input =
-            Ui.InplaceInput.init ()
-                |> Ui.InplaceInput.required True
-                |> Ui.InplaceInput.ctrlSave True
-
-        checkbox =
-            Ui.Checkbox.init ()
-
         textContent =
             task.description
                 ++ Array.foldr
                     (\x y -> "\n- " ++ x ++ y)
                     ""
                     task.notes
+
+        input =
+            TaskInput.init ()
+                |> TaskInput.setNew False
+                |> TaskInput.setValue textContent
+
+        checkbox =
+            Ui.Checkbox.init ()
+                |> Ui.Checkbox.setValue task.completed
+
     in
         { id = task.id
         , updating = False
         , notes = task.notes
-        , input =
-            { input | value = textContent }
-        , checkbox =
-            { checkbox | value = task.completed }
+        , input = input
+        , checkbox = checkbox
         }
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ui.InplaceInput.onChange Change model.input
+        [ TaskInput.onChange Change model.input
         , Ui.Checkbox.onChange Toggle model.checkbox
         ]
 
@@ -158,7 +158,8 @@ toTask model =
                 Nothing -> ""
 
         parts =
-            String.split "\n" model.input.value
+            String.split "\n"
+                (TaskInput.getValue model.input)
                 |> List.map clean
                 |> List.filter (not << String.isEmpty)
 
@@ -221,7 +222,7 @@ update msg model =
         Input msg ->
             let
                 ( newInput, inputCmd ) =
-                    Ui.InplaceInput.update msg model.input
+                    TaskInput.update msg model.input
             in
                 ( { model | input = newInput }
                 , Cmd.map Input inputCmd
