@@ -48,8 +48,8 @@ getTasks cb date =
             <| Http.get url tasksDecoder
 
 -- Create a task
-createTask : (Result Http.Error Task -> msg) -> String -> Cmd msg
-createTask cb value =
+createTask : (Result Http.Error Task -> msg) -> String -> Date.Date -> Cmd msg
+createTask cb value date =
     let
         request = Http.request
             { method = "POST"
@@ -58,7 +58,7 @@ createTask cb value =
                 , Http.header "Accept" "application/vnd.pgrst.object+json"
                 ]
             , url = apiUrl
-            , body = Http.jsonBody (newTaskEncoder value)
+            , body = Http.jsonBody (newTaskEncoder value date)
             , expect = Http.expectJson taskDecoder
             , timeout = Nothing
             , withCredentials = False
@@ -128,12 +128,12 @@ taskEncoder task =
 
 
 -- Encode a new task (just the description)
-newTaskEncoder : String -> Encode.Value
-newTaskEncoder description =
+newTaskEncoder : String -> Date.Date -> Encode.Value
+newTaskEncoder description date =
     Encode.object
         [ ("description", Encode.string description)
         , ("is_complete", Encode.bool False)
-        , ("day", Encode.string "Sept 3 2017")
+        , ("day", Encode.string (dateToString date))
         , ("notes", Encode.array Array.empty)
         ]
 

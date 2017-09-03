@@ -152,6 +152,8 @@ update msg model =
         let
             ( newTaskModel, newTaskCmd ) =
                 TaskInput.setValue "" model.newTaskModel
+
+            currentDate = model.calendarModel.calendar.value
         in
             ( { model
               | newTaskModel  = newTaskModel
@@ -159,7 +161,9 @@ update msg model =
 
             , Cmd.batch
                 [ Cmd.map NewTaskMsg newTaskCmd
-                , Api.createTask OnCreate description
+                , Api.createTask OnCreate
+                    description
+                    currentDate
                 ]
             )
 
