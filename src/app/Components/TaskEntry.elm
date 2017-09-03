@@ -85,7 +85,7 @@ view model =
                     , disabled = False
                     , readonly = False
                     , text = "Delete"
-                    , kind = "primary"
+                    , kind = "danger"
                     , side = "right"
                     , size = "small"
                     }
