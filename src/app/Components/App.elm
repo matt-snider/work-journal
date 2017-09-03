@@ -30,9 +30,9 @@ import Utils.Style as Style
  - TYPES -
  ---------}
 type alias Model =
-    { taskListModel  : TaskList.Model
-    , newTaskModel   : TaskInput.Model
-    , calendarModel  : Ui.DatePicker.Model
+    { taskList     : TaskList.Model
+    , newTaskInput : TaskInput.Model
+    , datepicker   : Ui.DatePicker.Model
     }
 
 type Msg
@@ -47,7 +47,7 @@ type Msg
 
     -- Component msgs
     | DatePickerMsg Ui.DatePicker.Msg
-    | NewTaskMsg  TaskInput.Msg
+    | NewTaskInputMsg  TaskInput.Msg
     | TaskListMsg TaskList.Msg
 
 
@@ -70,7 +70,7 @@ view model =
         , Ui.Container.column
             [ contentStyle ]
             [ div []
-                [ Ui.DatePicker.view "en_us" model.calendarModel
+                [ Ui.DatePicker.view "en_us" model.datepicker
                     |> Html.map DatePickerMsg
 
                 , Ui.Button.view
@@ -78,19 +78,19 @@ view model =
                     (Ui.Button.model "Today" "warning" "medium")
                 ]
 
-            , TaskList.view model.taskListModel
+            , TaskList.view model.taskList
                 |> Html.map TaskListMsg
 
             , Ui.Container.row
                 []
                 [ div [ Style.flex "70" ]
                     [ TaskInput.view
-                        model.newTaskModel
-                        |> Html.map NewTaskMsg
+                        model.newTaskInput
+                        |> Html.map NewTaskInputMsg
                     ]
 
                 , Ui.Button.view
-                    (Add (TaskInput.getValue model.newTaskModel))
+                    (Add (TaskInput.getValue model.newTaskInput))
                     { disabled = False
                     , readonly = False
                     , kind = "primary"
@@ -115,21 +115,21 @@ contentStyle = style
 init : (Model, Cmd Msg)
 init =
     let
-        ( taskListModel, taskListCmd ) =
+        ( taskList, taskListCmd ) =
             TaskList.init (ExtDate.now ())
 
-        newTaskModel =
+        newTaskInput =
             TaskInput.init ()
                 |> TaskInput.withNew True
                 |> TaskInput.withPlaceholder "Enter a task..."
 
-        calendarModel =
+        datepicker =
             Ui.DatePicker.init ()
                 |> Ui.DatePicker.closeOnSelect True
     in
-        ( { taskListModel = taskListModel
-          , newTaskModel = newTaskModel
-          , calendarModel = calendarModel
+        ( { taskList = taskList
+          , newTaskInput  = newTaskInput
+          , datepicker = datepicker
           }
 
         , Cmd.batch
@@ -141,12 +141,12 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     let
         taskListSub =
-            TaskList.subscriptions model.taskListModel
+            TaskList.subscriptions model.taskList
     in
         Sub.batch
             [ Sub.map TaskListMsg taskListSub
-            , TaskInput.onChange EditNew model.newTaskModel
-            , Ui.DatePicker.onChange DateChanged model.calendarModel
+            , TaskInput.onChange EditNew model.newTaskInput
+            , Ui.DatePicker.onChange DateChanged model.datepicker
             ]
 
 
@@ -155,17 +155,17 @@ update msg model =
   case msg of
     Add description ->
         let
-            ( newTaskModel, newTaskCmd ) =
-                TaskInput.setValue "" model.newTaskModel
+            ( updatedNewTaskInput, newTaskInputCmd ) =
+                TaskInput.setValue "" model.newTaskInput
 
-            currentDate = model.calendarModel.calendar.value
+            currentDate = model.datepicker.calendar.value
         in
             ( { model
-              | newTaskModel  = newTaskModel
+              | newTaskInput = updatedNewTaskInput
               }
 
             , Cmd.batch
-                [ Cmd.map NewTaskMsg newTaskCmd
+                [ Cmd.map NewTaskInputMsg newTaskInputCmd
                 , Api.createTask OnCreate
                     description
                     currentDate
@@ -176,26 +176,26 @@ update msg model =
         let
             date = Date.fromTime time
 
-            ( newListModel, listCmd ) =
+            ( updatedTaskList, taskListCmd ) =
                 TaskList.init date
         in
-            ( { model | taskListModel = newListModel }
-            , Cmd.map TaskListMsg listCmd
+            ( { model | taskList = updatedTaskList }
+            , Cmd.map TaskListMsg taskListCmd
             )
 
     Today ->
         let
             today =  ExtDate.now ()
 
-            newCalendarModel =
-                Ui.DatePicker.setValue today model.calendarModel
+            updatedDatepicker =
+                Ui.DatePicker.setValue today model.datepicker
 
-            ( newTaskListModel, taskListCmd ) =
+            ( updatedTaskList, taskListCmd ) =
                 TaskList.init today
         in
             ( { model
-              | taskListModel = newTaskListModel
-              , calendarModel = newCalendarModel
+              | taskList   = updatedTaskList
+              , datepicker = updatedDatepicker
               }
             , Cmd.map TaskListMsg taskListCmd
             )
@@ -203,10 +203,10 @@ update msg model =
 
     OnCreate (Ok task) ->
         let
-            newTaskListModel =
-                TaskList.addTask task model.taskListModel
+            updatedTaskList =
+                TaskList.addTask task model.taskList
         in
-            ( { model | taskListModel = newTaskListModel }
+            ( { model | taskList = updatedTaskList }
             , Cmd.none
             )
 
@@ -215,37 +215,37 @@ update msg model =
 
     EditNew description ->
         let
-            (newTaskModel, _) =
-                TaskInput.setValue description model.newTaskModel
+            ( updatedNewTaskInput, cmd ) =
+                TaskInput.setValue description model.newTaskInput
         in
-            ( { model | newTaskModel = newTaskModel }
+            ( { model | newTaskInput = updatedNewTaskInput }
             , Cmd.none
             )
 
     DatePickerMsg msg ->
         let
-            ( newDatePickerModel, datePickerCmd ) =
-                Ui.DatePicker.update msg model.calendarModel
+            ( updatedDatepicker, datepickerCmd ) =
+                Ui.DatePicker.update msg model.datepicker
         in
-            ( { model | calendarModel = newDatePickerModel }
-            , Cmd.map DatePickerMsg datePickerCmd
+            ( { model | datepicker = updatedDatepicker }
+            , Cmd.map DatePickerMsg datepickerCmd
             )
 
 
-    NewTaskMsg newTaskMsg ->
+    NewTaskInputMsg msg ->
         let
-            (newTaskModel, cmd) =
-                TaskInput.update newTaskMsg model.newTaskModel
+            ( updatedNewTaskInput, cmd ) =
+                TaskInput.update msg model.newTaskInput
         in
-            ( { model | newTaskModel = newTaskModel }
-            , Cmd.map NewTaskMsg cmd
+            ( { model | newTaskInput = updatedNewTaskInput }
+            , Cmd.map NewTaskInputMsg cmd
             )
 
-    TaskListMsg taskListMsg ->
+    TaskListMsg msg ->
         let
-            ( newTaskListModel, command ) =
-                TaskList.update taskListMsg model.taskListModel
+            ( updatedTaskList, cmd ) =
+                TaskList.update msg model.taskList
         in
-            ( { model | taskListModel = newTaskListModel }
-            , Cmd.map TaskListMsg command
+            ( { model | taskList = updatedTaskList }
+            , Cmd.map TaskListMsg cmd
             )
