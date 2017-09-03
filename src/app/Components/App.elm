@@ -8,11 +8,15 @@ module App exposing
     )
 
 
+import Date
+import Ext.Date as ExtDate
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import Time
 import Ui.Button
 import Ui.Container
+import Ui.DatePicker
 import Ui.Header
 
 import TaskList
@@ -28,19 +32,22 @@ import Utils.Style as Style
 type alias Model =
     { taskListModel  : TaskList.Model
     , newTaskModel   : TaskInput.Model
+    , calendarModel  : Ui.DatePicker.Model
     }
 
 type Msg
     -- Basic msgs
     = Add String
     | EditNew String
+    | DateChanged Time.Time
 
     -- Http msgs
     | OnCreate (Result Http.Error Api.Task)
 
     -- Component msgs
-    | TaskListMsg TaskList.Msg
+    | DatePickerMsg Ui.DatePicker.Msg
     | NewTaskMsg  TaskInput.Msg
+    | TaskListMsg TaskList.Msg
 
 
 {--------
@@ -61,7 +68,12 @@ view model =
 
         , Ui.Container.column
             [ contentStyle ]
-            [ TaskList.view model.taskListModel
+            [ div []
+                [ Ui.DatePicker.view "en_us" model.calendarModel
+                    |> Html.map DatePickerMsg
+                ]
+
+            , TaskList.view model.taskListModel
                 |> Html.map TaskListMsg
 
             , Ui.Container.row
@@ -99,15 +111,20 @@ init : (Model, Cmd Msg)
 init =
     let
         ( taskListModel, taskListCmd ) =
-            TaskList.init
+            TaskList.init (ExtDate.now ())
 
         newTaskModel =
             TaskInput.init ()
                 |> TaskInput.withNew True
                 |> TaskInput.withPlaceholder "Enter a task..."
+
+        calendarModel =
+            Ui.DatePicker.init ()
+                |> Ui.DatePicker.closeOnSelect True
     in
         ( { taskListModel = taskListModel
           , newTaskModel = newTaskModel
+          , calendarModel = calendarModel
           }
 
         , Cmd.batch
@@ -124,6 +141,7 @@ subscriptions model =
         Sub.batch
             [ Sub.map TaskListMsg taskListSub
             , TaskInput.onChange EditNew model.newTaskModel
+            , Ui.DatePicker.onChange DateChanged model.calendarModel
             ]
 
 
@@ -143,6 +161,17 @@ update msg model =
                 [ Cmd.map NewTaskMsg newTaskCmd
                 , Api.createTask OnCreate description
                 ]
+            )
+
+    DateChanged time ->
+        let
+            date = Date.fromTime time
+
+            ( newListModel, listCmd ) =
+                TaskList.init date
+        in
+            ( { model | taskListModel = newListModel }
+            , Cmd.map TaskListMsg listCmd
             )
 
     OnCreate (Ok task) ->
@@ -166,14 +195,15 @@ update msg model =
             , Cmd.none
             )
 
-    TaskListMsg taskListMsg ->
+    DatePickerMsg msg ->
         let
-            ( newTaskListModel, command ) =
-                TaskList.update taskListMsg model.taskListModel
+            ( newDatePickerModel, datePickerCmd ) =
+                Ui.DatePicker.update msg model.calendarModel
         in
-            ( { model | taskListModel = newTaskListModel }
-            , Cmd.map TaskListMsg command
+            ( { model | calendarModel = newDatePickerModel }
+            , Cmd.map DatePickerMsg datePickerCmd
             )
+
 
     NewTaskMsg newTaskMsg ->
         let
@@ -182,4 +212,13 @@ update msg model =
         in
             ( { model | newTaskModel = newTaskModel }
             , Cmd.map NewTaskMsg cmd
+            )
+
+    TaskListMsg taskListMsg ->
+        let
+            ( newTaskListModel, command ) =
+                TaskList.update taskListMsg model.taskListModel
+        in
+            ( { model | taskListModel = newTaskListModel }
+            , Cmd.map TaskListMsg command
             )

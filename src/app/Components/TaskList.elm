@@ -53,14 +53,11 @@ view model =
 {---------
  - STATE -
  ---------}
-init : (Model, Cmd Msg)
-init =
-    let
-        today = Date.fromTime 1504463356113
-    in
-        ( { entries = Array.empty }
-        , Api.getTasks OnLoad today
-        )
+init : Date.Date -> (Model, Cmd Msg)
+init date =
+    ( { entries = Array.empty }
+    , Api.getTasks OnLoad date
+    )
 
 
 subscriptions : Model -> Sub Msg
@@ -118,17 +115,26 @@ update msg model =
                 )
 
 
-setTasks : Array.Array Api.Task -> Model -> Model
-setTasks tasks model =
-    { model | entries = Array.map TaskEntry.init tasks }
-
-
 addTask : Api.Task -> Model -> Model
 addTask task model =
     let
         newEntry = TaskEntry.init task
     in
         { model | entries = Array.push newEntry model.entries }
+
+
+
+{---------
+ - STATE -
+ ---------}
+removeById : Int -> Array.Array TaskEntry.Model -> Array.Array TaskEntry.Model
+removeById id arr =
+    Array.filter (\x -> x.id /= id) arr
+
+
+setTasks : Array.Array Api.Task -> Model -> Model
+setTasks tasks model =
+    { model | entries = Array.map TaskEntry.init tasks }
 
 
 replace : TaskEntry.Model -> TaskEntry.Model -> Array.Array TaskEntry.Model  -> Array.Array TaskEntry.Model
@@ -141,8 +147,3 @@ replace old new arr =
                 x
     in
         Array.map maybeReplace arr
-
-
-removeById : Int -> Array.Array TaskEntry.Model -> Array.Array TaskEntry.Model
-removeById id arr =
-    Array.filter (\x -> x.id /= id) arr
