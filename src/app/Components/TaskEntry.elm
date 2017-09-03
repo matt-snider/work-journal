@@ -108,8 +108,8 @@ init task =
 
         input =
             TaskInput.init ()
-                |> TaskInput.setNew False
-                |> TaskInput.setValue textContent
+                |> TaskInput.withNew False
+                |> TaskInput.withValue textContent
 
         checkbox =
             Ui.Checkbox.init ()

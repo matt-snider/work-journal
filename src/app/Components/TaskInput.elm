@@ -4,10 +4,12 @@ module TaskInput exposing
     , getValue
     , init
     , onChange
-    , setNew
     , setValue
     , update
     , view
+    , withNew
+    , withPlaceholder
+    , withValue
     )
 
 import Html exposing (..)
@@ -98,20 +100,44 @@ update msg model =
                 )
 
 
+setValue : String -> Model -> (Model, Cmd Msg)
+setValue value model =
+    let
+        ( newInput, inputCmd ) =
+            Ui.InplaceInput.setValue
+                value
+                model.input
+    in
+        ( { model | input = newInput }
+        , Cmd.map InplaceInputMsg inputCmd
+        )
+
+
 {-----------
  - HELPERS -
  -----------}
-setNew : Bool -> Model -> Model
-setNew isNew model = { model | isNew = isNew }
+withNew : Bool -> Model -> Model
+withNew isNew model = { model | isNew = isNew }
 
 
-setValue : String -> Model -> Model
-setValue value model =
+withPlaceholder : String -> Model -> Model
+withPlaceholder placeholder model =
+    { model
+    | input =
+        Ui.InplaceInput.placeholder
+            placeholder
+            model.input
+    }
+
+
+withValue : String -> Model -> Model
+withValue value model =
     let
         input = model.input
         newInput = { input | value = value }
     in
         { model | input = newInput }
+
 
 setTextarea : Ui.Textarea.Model -> Model -> Model
 setTextarea newTextarea model =

@@ -14,10 +14,10 @@ import Http
 import Ui.Button
 import Ui.Container
 import Ui.Header
-import Ui.Input
 
-import Utils.Api as Api
 import TaskList
+import TaskInput
+import Utils.Api as Api
 import Utils.Logging as Logging
 
 
@@ -26,7 +26,7 @@ import Utils.Logging as Logging
  ---------}
 type alias Model =
     { taskListModel  : TaskList.Model
-    , newTaskModel   : Ui.Input.Model
+    , newTaskModel   : TaskInput.Model
     }
 
 type Msg
@@ -39,7 +39,7 @@ type Msg
 
     -- Component msgs
     | TaskListMsg TaskList.Msg
-    | NewTaskMsg Ui.Input.Msg
+    | NewTaskMsg  TaskInput.Msg
 
 
 {--------
@@ -65,12 +65,12 @@ view model =
 
             , Ui.Container.row
                 []
-                [ Ui.Input.view
+                [ TaskInput.view
                     model.newTaskModel
                     |> Html.map NewTaskMsg
 
                 , Ui.Button.view
-                    (Add model.newTaskModel.value)
+                    (Add (TaskInput.getValue model.newTaskModel))
                     { disabled = False
                     , readonly = False
                     , kind = "primary"
@@ -99,8 +99,9 @@ init =
             TaskList.init
 
         newTaskModel =
-            Ui.Input.init ()
-                |> Ui.Input.placeholder "Enter a task..."
+            TaskInput.init ()
+                |> TaskInput.withNew True
+                |> TaskInput.withPlaceholder "Enter a task..."
     in
         ( { taskListModel = taskListModel
           , newTaskModel = newTaskModel
@@ -119,7 +120,7 @@ subscriptions model =
     in
         Sub.batch
             [ Sub.map TaskListMsg taskListSub
-            , Ui.Input.onChange EditNew model.newTaskModel
+            , TaskInput.onChange EditNew model.newTaskModel
             ]
 
 
@@ -129,7 +130,7 @@ update msg model =
     Add description ->
         let
             ( newTaskModel, newTaskCmd ) =
-                Ui.Input.setValue "" model.newTaskModel
+                TaskInput.setValue "" model.newTaskModel
         in
             ( { model
               | newTaskModel  = newTaskModel
@@ -156,7 +157,7 @@ update msg model =
     EditNew description ->
         let
             (newTaskModel, _) =
-                Ui.Input.setValue description model.newTaskModel
+                TaskInput.setValue description model.newTaskModel
         in
             ( { model | newTaskModel = newTaskModel }
             , Cmd.none
@@ -174,7 +175,7 @@ update msg model =
     NewTaskMsg newTaskMsg ->
         let
             (newTaskModel, cmd) =
-                Ui.Input.update newTaskMsg model.newTaskModel
+                TaskInput.update newTaskMsg model.newTaskModel
         in
             ( { model | newTaskModel = newTaskModel }
             , Cmd.map NewTaskMsg cmd
