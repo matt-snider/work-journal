@@ -55,28 +55,41 @@ type Msg
  --------}
 view : Model -> Html Msg
 view model =
+    let
+        flex x =
+            style [ ("flex", x) ]
+
+        containerStyle =
+            style [ ("margin-bottom", "15px") ]
+    in
     Ui.Container.column
-        [ ]
+        [ containerStyle ]
         [ Ui.Container.row
             []
-            [ Ui.Checkbox.view
-                model.checkbox
-                |> Html.map Checkbox
+            [ div [ ]
+                [ Ui.Checkbox.view
+                    model.checkbox
+                    |> Html.map Checkbox
+                ]
 
-            , TaskInput.view
-                model.input
-                |> Html.map Input
+            , div [ flex "80" ]
+                [ TaskInput.view
+                    model.input
+                    |> Html.map Input
+                ]
 
-            , Ui.IconButton.view
-                Delete
-                { glyph = Ui.Icons.close []
-                , disabled = False
-                , readonly = False
-                , text = "Delete"
-                , kind = "primary"
-                , side = "right"
-                , size = "small"
-                }
+            , div [ flex "10" ]
+                [ Ui.IconButton.view
+                    Delete
+                    { glyph = Ui.Icons.close []
+                    , disabled = False
+                    , readonly = False
+                    , text = "Delete"
+                    , kind = "primary"
+                    , side = "right"
+                    , size = "small"
+                    }
+                ]
 
             , maybeLoadingIndicator model
             ]
