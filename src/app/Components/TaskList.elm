@@ -9,6 +9,7 @@ module TaskList exposing
     )
 
 import Array
+import Date
 import Html exposing (..)
 import Http
 
@@ -54,9 +55,12 @@ view model =
  ---------}
 init : (Model, Cmd Msg)
 init =
-    ( { entries = Array.empty }
-    , Api.getTasks OnLoad
-    )
+    let
+        today = Date.fromTime 1504463356113
+    in
+        ( { entries = Array.empty }
+        , Api.getTasks OnLoad today
+        )
 
 
 subscriptions : Model -> Sub Msg

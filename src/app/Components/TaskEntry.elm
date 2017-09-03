@@ -9,6 +9,7 @@ module TaskEntry exposing
     )
 
 import Array
+import Date
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
@@ -30,6 +31,7 @@ import Utils.Style as Style
  ---------}
 type alias Model =
     { id        : Int
+    , date      : Date.Date
     , updating  : Bool
     , notes     : Array.Array String
     , input     : TaskInput.Model
@@ -131,8 +133,10 @@ init task =
         , updating = False
         , notes = task.notes
         , input = input
+        , date  = task.date
         , checkbox = checkbox
         }
+
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
@@ -185,8 +189,10 @@ toTask model =
         { id = model.id
         , description = description
         , completed   = model.checkbox.value
+        , date        = model.date
         , notes       = Array.fromList notes
         }
+
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =

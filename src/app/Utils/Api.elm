@@ -7,9 +7,12 @@ module Utils.Api exposing
     )
 
 import Array
+import Date
 import Http
 import Json.Decode as Decode
 import Json.Encode as Encode
+
+import Utils.Json exposing (decodeDate)
 
 
 {---------
@@ -19,6 +22,7 @@ type alias Task =
     { id          : Int
     , description : String
     , completed   : Bool
+    , date        : Date.Date
     , notes       : Array.Array String
     }
 
@@ -35,10 +39,13 @@ type alias Task =
 apiUrl = "http://localhost:3000/tasks"
 
 -- Get all tasks
-getTasks : (Result Http.Error (Array.Array Task) -> msg) -> Cmd msg
-getTasks cb =
-    Http.send cb
-        <| Http.get apiUrl tasksDecoder
+getTasks : (Result Http.Error (Array.Array Task) -> msg) -> Date.Date -> Cmd msg
+getTasks cb date =
+    let
+        url = apiUrl ++ "?day=eq." ++ (dateToString date)
+    in
+        Http.send cb
+            <| Http.get url tasksDecoder
 
 -- Create a task
 createTask : (Result Http.Error Task -> msg) -> String -> Cmd msg
@@ -101,10 +108,11 @@ tasksDecoder = Decode.array taskDecoder
 
 -- Decode single task
 taskDecoder : Decode.Decoder Task
-taskDecoder = Decode.map4 Task
+taskDecoder = Decode.map5 Task
     (Decode.at ["id"] Decode.int)
     (Decode.at ["description"] Decode.string)
     (Decode.at ["is_complete"] Decode.bool)
+    (Decode.at ["day"] decodeDate)
     (Decode.at ["notes"] (Decode.array Decode.string))
 
 -- Encode task
@@ -114,14 +122,27 @@ taskEncoder task =
         [ ("id", Encode.int task.id)
         , ("description", (Encode.string task.description))
         , ("is_complete", (Encode.bool task.completed))
+        , ("day", Encode.string (dateToString task.date))
         , ("notes", (Encode.array (Array.map Encode.string task.notes)))
         ]
+
 
 -- Encode a new task (just the description)
 newTaskEncoder : String -> Encode.Value
 newTaskEncoder description =
     Encode.object
-        [ ("description", (Encode.string description))
-        , ("is_complete", (Encode.bool False))
-        , ("notes", (Encode.array Array.empty))
+        [ ("description", Encode.string description)
+        , ("is_complete", Encode.bool False)
+        , ("day", Encode.string "Sept 3 2017")
+        , ("notes", Encode.array Array.empty)
         ]
+
+
+dateToString : Date.Date -> String
+dateToString date =
+    let
+        month = toString (Date.month date)
+        day   = toString (Date.day date)
+        year  = toString (Date.year date)
+    in
+        month ++ " " ++ day ++ " " ++ year
