@@ -12,7 +12,7 @@ import Array
 import Html exposing (..)
 import Http
 
-import App.Api as Api
+import Utils.Api as Api
 import TaskEntry
 import Utils.Logging as Logging
 

@@ -1,4 +1,4 @@
-module App.Api exposing
+module Utils.Api exposing
     ( Task
     , getTasks
     , createTask
