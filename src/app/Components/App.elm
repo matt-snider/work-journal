@@ -1,15 +1,97 @@
-module App.State exposing (init, update, subscriptions)
+module App exposing
+    ( Model
+    , Msg
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
+
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Http
+import Ui.Button
+import Ui.Container
+import Ui.Header
 import Ui.Input
 
-import App.Types exposing (..)
-import App.Api as Api
+import Utils.Api as Api
 import TaskList
-
 import Utils.Logging as Logging
 
 
--- Init
+{---------
+ - TYPES -
+ ---------}
+type alias Model =
+    { taskListModel  : TaskList.Model
+    , newTaskModel   : Ui.Input.Model
+    }
+
+type Msg
+    -- Basic msgs
+    = Add String
+    | EditNew String
+
+    -- Http msgs
+    | OnCreate (Result Http.Error Api.Task)
+
+    -- Component msgs
+    | TaskListMsg TaskList.Msg
+    | NewTaskMsg Ui.Input.Msg
+
+
+{--------
+ - VIEW -
+ --------}
+view : Model -> Html Msg
+view model =
+    Ui.Container.column
+        []
+        [ Ui.Header.view
+            [ Ui.Header.title
+                { action = Nothing
+                , target = "_self"
+                , link = Nothing
+                , text = "Work Journal"
+                }
+            ]
+
+        , Ui.Container.column
+            [ contentStyle ]
+            [ TaskList.view model.taskListModel
+                |> Html.map TaskListMsg
+
+            , Ui.Container.row
+                []
+                [ Ui.Input.view
+                    model.newTaskModel
+                    |> Html.map NewTaskMsg
+
+                , Ui.Button.view
+                    (Add model.newTaskModel.value)
+                    { disabled = False
+                    , readonly = False
+                    , kind = "primary"
+                    , size = "medium"
+                    , text = "Add"
+                    }
+
+                ]
+            ]
+        ]
+
+
+contentStyle : Attribute msg
+contentStyle = style
+    [ ("padding", "15px")
+    ]
+
+
+{---------
+ - STATE -
+ ---------}
 init : (Model, Cmd Msg)
 init =
     let
@@ -29,7 +111,6 @@ init =
         )
 
 
--- Subs
 subscriptions : Model -> Sub Msg
 subscriptions model =
     let
@@ -42,8 +123,6 @@ subscriptions model =
             ]
 
 
-
--- Update
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of

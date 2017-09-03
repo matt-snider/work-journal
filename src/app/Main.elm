@@ -1,14 +1,13 @@
 module Main exposing (main)
 
-import App.State exposing (init, update, subscriptions)
-import App.View exposing (view)
+import App
 import Html
 
 
 main =
     Html.program
-        { view = view
-        , update = update
-        , init = init
-        , subscriptions = subscriptions
+        { view = App.view
+        , update = App.update
+        , init = App.init
+        , subscriptions = App.subscriptions
         }
