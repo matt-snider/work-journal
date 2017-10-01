@@ -1,7 +1,5 @@
 db:
   image: postgres:9.6
-  ports:
-    - 5432:5432
   environment: &db_environment
     POSTGRES_DB: work-journal
     POSTGRES_USER: postgres
@@ -18,3 +16,4 @@ api:
   environment:
     <<: *db_environment
     POSTGRES_HOST: db
+
