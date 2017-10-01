@@ -22,6 +22,7 @@ type alias Task =
     { id          : Int
     , description : String
     , completed   : Bool
+    , ordering    : Int
     , date        : Date.Date
     , notes       : Array.Array String
     }
@@ -108,10 +109,11 @@ tasksDecoder = Decode.array taskDecoder
 
 -- Decode single task
 taskDecoder : Decode.Decoder Task
-taskDecoder = Decode.map5 Task
+taskDecoder = Decode.map6 Task
     (Decode.at ["id"] Decode.int)
     (Decode.at ["description"] Decode.string)
     (Decode.at ["is_complete"] Decode.bool)
+    (Decode.at ["ordering"] Decode.int)
     (Decode.at ["day"] decodeDate)
     (Decode.at ["notes"] (Decode.array Decode.string))
 
@@ -122,6 +124,7 @@ taskEncoder task =
         [ ("id", Encode.int task.id)
         , ("description", (Encode.string task.description))
         , ("is_complete", (Encode.bool task.completed))
+        , ("ordering",    (Encode.int task.ordering))
         , ("day", Encode.string (dateToString task.date))
         , ("notes", (Encode.array (Array.map Encode.string task.notes)))
         ]

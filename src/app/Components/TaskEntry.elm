@@ -34,6 +34,7 @@ type alias Model =
     , date      : Date.Date
     , updating  : Bool
     , notes     : Array.Array String
+    , ordering  : Int
     , input     : TaskInput.Model
     , checkbox  : Ui.Checkbox.Model
     }
@@ -133,6 +134,7 @@ init task =
         , updating = False
         , notes = task.notes
         , input = input
+        , ordering = task.ordering
         , date  = task.date
         , checkbox = checkbox
         }
@@ -189,6 +191,7 @@ toTask model =
         { id = model.id
         , description = description
         , completed   = model.checkbox.value
+        , ordering    = model.ordering
         , date        = model.date
         , notes       = Array.fromList notes
         }

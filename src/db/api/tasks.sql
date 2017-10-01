@@ -1,14 +1,15 @@
 -- API defintion for /tasks
 CREATE VIEW tasks AS
     SELECT * FROM models.tasks
-    ORDER BY id;
+    ORDER BY day, ordering;
 
 
-CREATE FUNCTION save_task()
+CREATE OR REPLACE FUNCTION api.save_task()
     RETURNS trigger AS $$
     DECLARE
         is_notes_valid BOOLEAN;
         new_id INT;
+        max_ordering INT;
         result RECORD;
     BEGIN
         -- Ensure notes is just a simple array
@@ -29,13 +30,19 @@ CREATE FUNCTION save_task()
             UPDATE models.tasks
                SET description = new.description,
                    is_complete = new.is_complete,
+                   ordering = new.ordering,
                    day = new.day,
                    notes = new.notes
             WHERE id = new.id;
             new_id = new.id;
         ELSE
-            INSERT INTO models.tasks (description, is_complete, notes, day)
-                VALUES (new.description, new.is_complete, new.notes, new.day)
+            SELECT coalesce(max(ordering), 0)
+            FROM models.tasks
+            WHERE day = new.day
+            INTO max_ordering;
+
+            INSERT INTO models.tasks (description, is_complete, ordering, notes, day)
+                VALUES (new.description, new.is_complete, max_ordering + 1, new.notes, new.day)
                 RETURNING id INTO new_id;
         END IF;
         SELECT * INTO result FROM api.tasks WHERE id = new_id;
