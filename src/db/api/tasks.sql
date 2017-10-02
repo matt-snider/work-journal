@@ -4,7 +4,7 @@ CREATE VIEW tasks AS
     ORDER BY day, ordering;
 
 
-CREATE OR REPLACE FUNCTION api.save_task()
+CREATE FUNCTION save_task()
     RETURNS trigger AS $$
     DECLARE
         is_notes_valid BOOLEAN;
