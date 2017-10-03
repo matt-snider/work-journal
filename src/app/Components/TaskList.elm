@@ -12,9 +12,10 @@ import Array
 import Date
 import Html exposing (..)
 import Http
+import Tuple
 
 import Utils.Api as Api
-import TaskEntry
+import TaskEntry exposing (MoveOp(..))
 import Utils.Logging as Logging
 
 
@@ -27,9 +28,11 @@ type alias Model =
 
 type Msg
     = Delete Int
+    | Move Int MoveOp
 
     -- Http msgs
     | OnLoad   (Result Http.Error (Array.Array Api.Task))
+    | OnReorder   (Result Http.Error (Array.Array Api.Task))
 
     -- Component msgs
     | TaskEntryMsg TaskEntry.Model TaskEntry.Msg
@@ -77,10 +80,16 @@ subscriptions model =
             (Array.map (TaskEntry.onDelete Delete) model.entries)
                 |> Array.toList
                 |> Sub.batch
+
+        onMoveSubs =
+            (Array.map (TaskEntry.onMove Move) model.entries)
+                |> Array.toList
+                |> Sub.batch
     in
         Sub.batch
             [ basicSubs
             , onDeleteSubs
+            , onMoveSubs
             ]
 
 
@@ -92,6 +101,15 @@ update msg model =
             , Cmd.none
             )
 
+        Move id op ->
+            let
+                newEntries = move id op model.entries
+                newTasks = Array.map TaskEntry.toTask newEntries
+            in
+                ( { model | entries = newEntries }
+                , Api.reorderTasks OnReorder newTasks
+                )
+
         -- Http handlers
         OnLoad (Ok tasks) ->
             ( model
@@ -101,6 +119,15 @@ update msg model =
 
         OnLoad (Err err) ->
             ( model, Logging.error err Cmd.none )
+
+        OnReorder (Ok tasks) ->
+            ( model
+                |> setTasks tasks
+            , Cmd.none
+            )
+
+        OnReorder (Err err) ->
+            ( model, Logging.error err Cmd.none)
 
         -- Child component handlers
         TaskEntryMsg entry msg ->
@@ -147,3 +174,32 @@ replace old new arr =
                 x
     in
         Array.map maybeReplace arr
+
+
+move : Int -> MoveOp -> Array.Array TaskEntry.Model -> Array.Array TaskEntry.Model
+move tid op arr =
+    let
+        isSeq idx1 idx2 = abs (idx1 - idx2) == 1
+
+        comparison (aIdx, a) (bIdx, b) =
+            if not (isSeq aIdx bIdx) then
+                -- leave how it is if non-sequential
+                LT
+            else
+                case (a.id == tid, b.id == tid, op) of
+                    -- a should be moved 'down'
+                    -- a > b
+                    (True, _, Down) -> GT
+
+                    -- b should be moved 'up'
+                    -- a > b
+                    (_, True, Up) -> GT
+
+                    -- otherwise, leave how it is
+                    (_, _, _) -> LT
+
+    in
+        Array.toIndexedList arr
+            |> List.sortWith comparison
+            |> List.map Tuple.second
+            |> Array.fromList
