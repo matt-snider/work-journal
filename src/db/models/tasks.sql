@@ -8,4 +8,5 @@ CREATE TABLE tasks (
 
     CONSTRAINT valid_ordering
         UNIQUE (ordering, day)
+        DEFERRABLE
 );
