@@ -4,6 +4,7 @@ module Utils.Api exposing
     , createTask
     , updateTask
     , deleteTask
+    , reorderTasks
     )
 
 import Array
@@ -37,13 +38,14 @@ type alias Task =
 --     single element arrays.
 
 -- TODO: this should come from a config file or env
-apiUrl = "http://localhost:3000/tasks"
+baseUrl = "http://localhost:3000"
+taskUrl = baseUrl ++ "/tasks"
 
 -- Get all tasks
 getTasks : (Result Http.Error (Array.Array Task) -> msg) -> Date.Date -> Cmd msg
 getTasks cb date =
     let
-        url = apiUrl ++ "?day=eq." ++ (dateToString date)
+        url = taskUrl ++ "?day=eq." ++ (dateToString date)
     in
         Http.send cb
             <| Http.get url tasksDecoder
@@ -58,7 +60,7 @@ createTask cb value date =
                 [ Http.header "Prefer" "return=representation"
                 , Http.header "Accept" "application/vnd.pgrst.object+json"
                 ]
-            , url = apiUrl
+            , url = taskUrl
             , body = Http.jsonBody (newTaskEncoder value date)
             , expect = Http.expectJson taskDecoder
             , timeout = Nothing
@@ -76,7 +78,7 @@ updateTask cb task =
                 [ Http.header "Prefer" "return=representation"
                 , Http.header "Accept" "application/vnd.pgrst.object+json"
                 ]
-            , url = apiUrl ++ "?id=eq." ++ toString(task.id)
+            , url = taskUrl ++ "?id=eq." ++ toString(task.id)
             , body = Http.jsonBody (taskEncoder task)
             , expect = Http.expectJson taskDecoder
             , timeout = Nothing
@@ -91,9 +93,25 @@ deleteTask cb task =
         request = Http.request
             { method = "DELETE"
             , headers = []
-            , url = apiUrl ++ "?id=eq." ++ toString (task.id)
+            , url = taskUrl ++ "?id=eq." ++ toString (task.id)
             , body = Http.emptyBody
             , expect = Http.expectStringResponse (\x -> Ok task)
+            , timeout = Nothing
+            , withCredentials = False
+            }
+    in Http.send cb request
+
+
+-- Reorder tasks
+reorderTasks : (Result Http.Error (Array.Array Task) -> msg) -> Array.Array Task -> Cmd msg
+reorderTasks cb tasks =
+    let
+        request = Http.request
+            { method = "POST"
+            , headers = []
+            , url = baseUrl ++ "/rpc/reorder_tasks"
+            , body = Http.jsonBody (orderingsEncoder tasks)
+            , expect = Http.expectStringResponse (\x -> Ok tasks)
             , timeout = Nothing
             , withCredentials = False
             }
@@ -149,3 +167,19 @@ dateToString date =
         year  = toString (Date.year date)
     in
         month ++ " " ++ day ++ " " ++ year
+
+-- Encoder for reorder request
+orderingsEncoder : Array.Array Task -> Encode.Value
+orderingsEncoder tasks =
+    let
+        makeOrdering ord task =
+            Encode.object
+            [ ("task_id",  Encode.int task.id)
+            , ("ordering", Encode.int ord)
+            ]
+    in
+        Encode.object
+        [ ("ordering"
+        ,  Encode.array
+            (Array.indexedMap makeOrdering tasks)
+        ) ]
