@@ -1,9 +1,12 @@
 module TaskEntry exposing
     ( Model
     , Msg
+    , MoveOp(..)
     , init
     , subscriptions
     , onDelete
+    , onMove
+    , toTask
     , update
     , view
     )
@@ -13,6 +16,7 @@ import Date
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
+import Ui.ButtonGroup
 import Ui.Container
 import Ui.Checkbox
 import Ui.Helpers.Emitter as Emitter
@@ -33,10 +37,11 @@ type alias Model =
     { id        : Int
     , date      : Date.Date
     , updating  : Bool
-    , notes     : Array.Array String
     , ordering  : Int
+    , notes     : Array.Array String
     , input     : TaskInput.Model
     , checkbox  : Ui.Checkbox.Model
+    , actions   : Ui.ButtonGroup.Model Msg
     }
 
 type Msg
@@ -44,6 +49,8 @@ type Msg
     = Delete
     | Change String
     | Toggle Bool
+    | MoveUp
+    | MoveDown
 
     -- Http msgs
     | OnSave   (Result Http.Error Api.Task)
@@ -52,6 +59,9 @@ type Msg
     -- Component msgs
     | Input    TaskInput.Msg
     | Checkbox Ui.Checkbox.Msg
+
+
+type MoveOp = Up | Down
 
 
 {--------
@@ -73,14 +83,17 @@ view model =
                     |> Html.map Checkbox
                 ]
 
-            , div [ Style.flex "80" ]
+            , div [ Style.flex "70" ]
                 [ TaskInput.view
                     model.input
                     |> Html.map Input
                 ]
 
-            , div [ Style.flex "10" ]
-                [ Ui.IconButton.view
+            , div [ Style.flex "20" ]
+                [ Ui.ButtonGroup.view
+                    model.actions
+
+                , Ui.IconButton.view
                     Delete
                     { glyph = Ui.Icons.close []
                     , disabled = False
@@ -88,7 +101,7 @@ view model =
                     , text = "Delete"
                     , kind = "danger"
                     , side = "right"
-                    , size = "small"
+                    , size = "medium"
                     }
                 ]
 
@@ -129,6 +142,12 @@ init task =
             Ui.Checkbox.init ()
                 |> Ui.Checkbox.setValue task.completed
 
+        actions =
+            Ui.ButtonGroup.model
+                [ ("↑", MoveUp)
+                , ("↓", MoveDown)
+                ]
+
     in
         { id = task.id
         , updating = False
@@ -136,6 +155,7 @@ init task =
         , input = input
         , ordering = task.ordering
         , date  = task.date
+        , actions = { actions | kind = "secondary" }
         , checkbox = checkbox
         }
 
@@ -147,14 +167,33 @@ subscriptions model =
         , Ui.Checkbox.onChange Toggle model.checkbox
         ]
 
+
 deleteChannel : Model -> String
 deleteChannel model =
         "deleteChannel" ++ toString(model.id)
+
+
+moveChannel : Model ->  MoveOp -> String
+moveChannel model op =
+        "moveChannel" ++ toString(model.id) ++ toString(op)
+
 
 onDelete : (Int -> msg) -> Model -> Sub msg
 onDelete msg model =
     Emitter.listenInt
         (deleteChannel model) msg
+
+
+-- Called with id and change
+onMove : (Int -> MoveOp -> msg) -> Model -> Sub msg
+onMove msg model =
+    Sub.batch
+        [ Emitter.listenNaked
+            (moveChannel model Up) (msg model.id Up)
+        , Emitter.listenNaked
+            (moveChannel model Down) (msg model.id Down)
+        ]
+
 
 setCompleted : Bool -> Model -> Model
 setCompleted value model =
@@ -222,6 +261,17 @@ update msg model =
                 , Emitter.sendInt (deleteChannel model) model.id
                 ]
             )
+
+        MoveUp ->
+            ( model
+            , Emitter.sendNaked (moveChannel model Up)
+            )
+
+        MoveDown ->
+            ( model
+            , Emitter.sendNaked (moveChannel model Down)
+            )
+
 
         -- Http handlers
         OnSave (Ok task) ->
